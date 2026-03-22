@@ -1,0 +1,10 @@
+{
+  "name": "placarfut",
+  "version": "1.0.0",
+  "description": "Placar de futebol ao vivo - SofaScore + ESPN",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "private": true
+}
