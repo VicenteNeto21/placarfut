@@ -116,7 +116,9 @@
 
                 <!-- Content -->
                 <div class="p-6 overflow-y-auto flex-1">
-                    <p class="text-sm text-gray-400 mb-6 font-medium">Seu painel está configurado para o modo "Limpo". Adicione abaixo apenas os torneios (nacionais ou internacionais) que você deseja acompanhar hoje.</p>
+                    <p class="text-sm text-gray-400 mb-6 font-medium">Seu painel está configurado para o modo "Limpo".
+                        Adicione abaixo apenas os torneios (nacionais ou internacionais) que você deseja acompanhar
+                        hoje.</p>
 
                     <div class="mb-6 bg-black/30 p-4 rounded-xl border border-white/5">
                         <label class="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Adicionar
@@ -131,10 +133,13 @@
                                 Adicionar
                             </button>
                         </div>
-                        <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Só aparecem campeonatos com jogos hoje.</p>
+                        <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-circle-info mr-1"></i> Só
+                            aparecem campeonatos com jogos hoje.</p>
 
                         <div class="mt-4 pt-4 border-t border-white/5">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Adicionar por ID Manual</label>
+                            <label
+                                class="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Adicionar
+                                por ID Manual</label>
                             <div class="flex gap-2">
                                 <input type="number" id="inputTorneioIdManual" placeholder="ID Torneio (Ex: 17015)"
                                     class="flex-1 bg-gray-800 text-sm px-3 py-2 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-emerald-500">
@@ -146,7 +151,8 @@
                         </div>
 
                         <div class="mt-4 pt-4 border-t border-white/5">
-                            <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Buscar Partida por ID (Direto)</label>
+                            <label class="block text-xs font-bold uppercase tracking-wider text-blue-400 mb-2">Buscar
+                                Partida por ID (Direto)</label>
                             <div class="flex gap-2">
                                 <input type="number" id="inputPartidaIdManual" placeholder="ID Partida (Ex: 1234567)"
                                     class="flex-1 bg-gray-800 text-sm px-3 py-2 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-emerald-500">
@@ -278,8 +284,11 @@
         </div>
 
         <!-- OVERLAY DE GOL -->
-        <div id="overlayGol" class="hidden fixed top-1/2 left-1/2 z-[100] pointer-events-none flex flex-col items-center justify-center">
-            <span class="text-[140px] font-black italic tracking-tighter text-white uppercase drop-shadow-[0_10px_30px_rgba(220,38,38,0.8)]" style="-webkit-text-stroke: 4px #dc2626;">GOL!</span>
+        <div id="overlayGol"
+            class="hidden fixed top-1/2 left-1/2 z-[100] pointer-events-none flex flex-col items-center justify-center">
+            <span
+                class="text-[140px] font-black italic tracking-tighter text-white uppercase drop-shadow-[0_10px_30px_rgba(220,38,38,0.8)]"
+                style="-webkit-text-stroke: 4px #dc2626;">GOL!</span>
         </div>
 
         <div id="placarWrapper" style="bottom: 55px; left: 50%; transform: translateX(-50%);">
@@ -314,7 +323,9 @@
                         <span id="tvRedCardCasa" class="red-card absolute top-3 left-4 hidden"></span>
                         <span id="tvNomeCasa"
                             class="font-black text-2xl xl:text-3xl uppercase tracking-tighter truncate text-right">CASA</span>
-                        <img id="imgLogoCasa" src="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'" referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
+                        <img id="imgLogoCasa" src=""
+                            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'"
+                            referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
                     </div>
                     <div
                         class="flex flex-col items-center justify-center bg-black/80 px-8 min-w-[220px] border-x border-gray-800">
@@ -326,7 +337,8 @@
                                 class="font-black text-4xl leading-none transition-all duration-300">0</span>
                         </div>
                         <div class="mt-1 flex items-center justify-center gap-1">
-                            <span id="tvPeriodLabel" class="text-[10px] text-gray-400 font-black tracking-widest hidden mt-0.5">1T</span>
+                            <span id="tvPeriodLabel"
+                                class="text-[10px] text-gray-400 font-black tracking-widest hidden mt-0.5">1T</span>
                             <span id="tvPeriodo"
                                 class="text-sm font-black text-yellow-400 font-['Roboto_Condensed'] tracking-wider">00:00</span>
                             <span id="tvAcrescimo"
@@ -334,7 +346,9 @@
                         </div>
                     </div>
                     <div class="flex-1 flex items-center justify-start gap-3 px-6 bg-white/5 relative">
-                        <img id="imgLogoFora" src="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'" referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
+                        <img id="imgLogoFora" src=""
+                            onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'"
+                            referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
                         <span id="tvNomeFora"
                             class="font-black text-2xl xl:text-3xl uppercase tracking-tighter truncate text-left">FORA</span>
                         <span id="tvRedCardFora" class="red-card absolute top-3 right-4 hidden"></span>
@@ -343,10 +357,13 @@
                 <div id="tvScorersBar"
                     class="w-full bg-black/95 border-t border-gray-800 text-[11px] font-bold px-6 py-2 flex justify-between hidden font-['Roboto_Condensed'] transition-all">
                     <div id="tvScorersCasa"
-                        class="flex-1 text-left pr-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis"></div>
-                    <div class="text-gray-600 text-[10px] mx-2 flex items-center flex-shrink-0"><i class="fa-solid fa-futbol"></i></div>
+                        class="flex-1 text-left pr-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis">
+                    </div>
+                    <div class="text-gray-600 text-[10px] mx-2 flex items-center flex-shrink-0"><i
+                            class="fa-solid fa-futbol"></i></div>
                     <div id="tvScorersFora"
-                        class="flex-1 text-right pl-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis"></div>
+                        class="flex-1 text-right pl-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis">
+                    </div>
                 </div>
             </div>
         </div>
@@ -361,14 +378,14 @@
 
     </div>
 
-    <script src="js/config.js?v=2"></script>
-    <script src="js/state.js?v=2"></script>
-    <script src="js/api.js?v=2"></script>
-    <script src="js/utils.js?v=2"></script>
-    <script src="js/ui.js?v=2"></script>
-    <script src="js/broadcast.js?v=2"></script>
-    <script src="js/manual.js"></script>
-    <script src="js/app.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/state.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/utils.js"></script>
+    <script src="./js/ui.js"></script>
+    <script src="./js/broadcast.js"></script>
+    <script src="./js/manual.js"></script>
+    <script src="./js/app.js"></script>
 </body>
 
 </html>
