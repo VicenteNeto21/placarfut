@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     // Configuração de CORS – permite qualquer origem (ajuste para produção)
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -46,4 +46,4 @@ export default async function handler(req, res) {
         console.error('Erro no proxy:', error);
         res.status(500).json({ error: 'Falha ao buscar dados da SofaScore', details: error.message });
     }
-}
+};

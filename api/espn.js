@@ -1,4 +1,4 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
     const liga = req.query.liga || "bra.1";
 
     try {
@@ -19,4 +19,4 @@ export default async function handler(req, res) {
     } catch (error) {
         res.status(500).json({ error: "Erro ESPN" });
     }
-}
+};
