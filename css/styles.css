@@ -1,4 +1,5 @@
         * {
+            -webkit-user-select: none;
             user-select: none;
         }
 
@@ -15,17 +16,148 @@
             position: absolute;
             width: 100%;
             max-width: 800px;
-            z-index: 40;
+            z-index: 60;
         }
 
         .placar-compacto {
-            background: linear-gradient(to right, #0f172a, #020617, #0f172a);
-            border: 2px solid #334155;
-            border-bottom: 4px solid #3b82f6;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(59, 130, 246, 0.1);
+            --theme-color: #38bdf8;
+            --theme-border-color: #374151;
+            --theme-bg-color: #1f2937;
+            --theme-bg-dark: #111827;
+            --theme-center-bg: #000000;
+
+            background: #0a0e17;
+            border: 1px solid var(--theme-border-color);
+            border-bottom: 4px solid var(--theme-color);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
             transform-origin: bottom center;
             transition: transform 0.2s ease-out;
             width: 100%;
+        }
+
+        .theme-text { color: var(--theme-color) !important; }
+        .theme-border { border-color: var(--theme-border-color) !important; }
+        .theme-bg { background-color: var(--theme-bg-color) !important; }
+        .theme-bg-dark { background-color: var(--theme-bg-dark) !important; }
+        .theme-center-bg { background-color: var(--theme-center-bg) !important; }
+
+        /* ====== TEMAS PERSONALIZADOS ====== */
+        .theme-libertadores {
+            --theme-color: #fbbf24;       /* Dourado */
+            --theme-border-color: #854d0e;
+            --theme-bg-color: #1a1500;
+            --theme-bg-dark: #140f00;
+            --theme-center-bg: #000000;
+        }
+        .theme-sulamericana {
+            --theme-color: #38bdf8;       /* Azul Escuro / Sky */
+            --theme-border-color: #0369a1;
+            --theme-bg-color: #082f49;
+            --theme-bg-dark: #04243b;
+            --theme-center-bg: #000000;
+        }
+        .theme-nordeste {
+            --theme-color: #f59e0b;       /* Laranja / Marrom */
+            --theme-border-color: #9a3412;
+            --theme-bg-color: #291500;
+            --theme-bg-dark: #1e0f00;
+            --theme-center-bg: #000000;
+        }
+        .theme-brasil {
+            --theme-color: #4ade80;       /* Verde Claro (Brasil) */
+            --theme-border-color: #166534;
+            --theme-bg-color: #052e16;
+            --theme-bg-dark: #02200f;
+            --theme-center-bg: #000000;
+        }
+        .theme-verde {
+            --theme-color: #10b981;       /* Verde Esmeralda */
+            --theme-border-color: #047857;
+            --theme-bg-color: #022c22;
+            --theme-bg-dark: #011c16;
+            --theme-center-bg: #000000;
+        }
+        .theme-feminino {
+            --theme-color: #ff4fa3;       /* Rosa vibrante */
+            --theme-border-color: #ff4fa3;
+            --theme-bg-color: #14030b;
+            --theme-bg-dark: #000000;
+            --theme-center-bg: #000000;
+        }
+
+        /* ====== MODELO DE PLACAR "COPA OFICIAL" ====== */
+        .layout-copa {
+            border-radius: 0 !important;
+            border: 2px solid var(--theme-color) !important;
+            border-bottom: 6px solid var(--theme-color) !important;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9) !important;
+        }
+        .layout-copa #dragHandle {
+            background: var(--theme-color) !important;
+            border-bottom: none !important;
+        }
+        .layout-copa #dragHandle * {
+            color: #000 !important;
+            font-weight: 900 !important;
+        }
+        .layout-copa #dragHandle button {
+            background: rgba(0,0,0,0.15) !important;
+        }
+        .layout-copa #dragHandle button:hover {
+            background: rgba(0,0,0,0.3) !important;
+        }
+        .layout-copa .theme-center-bg {
+            background: #ffffff !important;
+            border-left: 3px solid var(--theme-color) !important;
+            border-right: 3px solid var(--theme-color) !important;
+            justify-content: center !important;
+            gap: 2px;
+        }
+        .layout-copa .theme-center-bg #tvGolsCasa, 
+        .layout-copa .theme-center-bg #tvGolsFora {
+            color: #000000 !important;
+            font-size: 3rem !important;
+            line-height: 1 !important;
+            transform: translateY(-1px);
+        }
+        .layout-copa .theme-center-bg .text-gray-600 {
+            color: #666666 !important;
+        }
+        .layout-copa #tvPenaltisCasa,
+        .layout-copa #tvPenaltisFora {
+            font-size: 1.35rem !important;
+            line-height: 1 !important;
+            padding: 3px 7px !important;
+            align-self: center;
+        }
+        .layout-copa #tvPeriodo {
+            background: #000000 !important;
+            color: var(--theme-color) !important;
+            padding: 2px 10px !important;
+            border-radius: 4px !important;
+            border: 1px solid var(--theme-color);
+            line-height: 1.1 !important;
+            white-space: nowrap;
+        }
+        .layout-copa #tvPeriodLabel {
+            color: #000000 !important;
+            font-weight: 900 !important;
+        }
+        .layout-copa #tvAgregado {
+            margin-top: 2px !important;
+            max-width: calc(100% - 12px);
+            white-space: nowrap;
+        }
+        .layout-copa img {
+            transform: scale(1.35);
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.6));
+        }
+        .layout-copa #tvScorersBar, 
+        .layout-copa #tvStatsBar, 
+        .layout-copa #tvPenaltyBar {
+            background: var(--theme-bg-dark) !important;
+            border-top: 1px solid var(--theme-color) !important;
+            border-radius: 0 !important;
         }
 
         .drag-handle {
@@ -37,39 +169,43 @@
         }
 
         .goal-alert {
-            animation: flash-goal 2s ease-out;
+            animation: flash-goal 1.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         @keyframes flash-goal {
             0% {
-                transform: scale(1.4);
-                color: #fbbf24;
-                text-shadow: 0 0 30px #fbbf24, 0 0 60px #f59e0b;
+                transform: scale(1);
+                color: inherit;
             }
 
-            40% {
-                transform: scale(1.15);
+            20% {
+                transform: scale(1.3);
                 color: #fbbf24;
-                text-shadow: 0 0 15px #fbbf24;
+                text-shadow: 0 0 20px rgba(251, 191, 36, 0.8), 0 0 40px rgba(245, 158, 11, 0.6);
+            }
+
+            50% {
+                transform: scale(1.1);
+                color: #f59e0b;
+                text-shadow: 0 0 15px rgba(245, 158, 11, 0.8);
             }
 
             100% {
                 transform: scale(1);
                 color: inherit;
-                text-shadow: none;
             }
         }
 
         .overlay-gol-anim {
-            animation: anim-gol-overlay 4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            animation: anim-gol-overlay 3.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
         @keyframes anim-gol-overlay {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            10% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            20% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: drop-shadow(0 0 30px rgba(239,68,68,0.8)); }
-            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: drop-shadow(0 0 30px rgba(239,68,68,0.8)); }
-            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
+            0% { transform: translate(-50%, -30%) scale(0.8); opacity: 0; filter: blur(10px); }
+            15% { transform: translate(-50%, -50%) scale(1.05); opacity: 1; filter: blur(0); }
+            25% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(0); }
+            80% { transform: translate(-50%, -50%) scale(1); opacity: 1; filter: blur(0); }
+            100% { transform: translate(-50%, -70%) scale(1.1); opacity: 0; filter: blur(10px); }
         }
 
         .red-card {
@@ -79,7 +215,20 @@
             font-weight: 900;
             padding: 1px 4px;
             border-radius: 3px;
-            box-shadow: 0 0 8px rgba(220, 38, 38, 0.8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 14px;
+            height: 20px;
+        }
+
+        .yellow-card {
+            background-color: #eab308;
+            color: black;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 1px 4px;
+            border-radius: 3px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
@@ -93,19 +242,19 @@
             bottom: 0;
             left: 0;
             width: 100%;
-            background: linear-gradient(to right, #0f172a, #1e293b);
+            background: #0a0e17;
             color: white;
             display: flex;
             align-items: center;
             height: 40px;
-            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.9);
-            border-top: 2px solid #334155;
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+            border-top: 1px solid #374151;
             z-index: 50;
             font-family: 'Roboto Condensed', sans-serif;
+            overflow: hidden;
         }
 
         .ticker-label {
-            background-color: #3b82f6;
             color: white;
             font-weight: 900;
             padding: 0 20px;
@@ -129,7 +278,7 @@
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
-            animation: ticker 60s linear infinite;
+            animation: ticker 200s linear infinite;
         }
 
         @keyframes ticker {
@@ -149,7 +298,7 @@
             font-size: 16px;
             font-weight: 700;
             height: 100%;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            border-right: 1px solid #1f2937;
         }
 
         .liga-badge {
@@ -258,4 +407,33 @@
         #tvPanelEstatisticas,
         #tvPanelTabela {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        .ticker-goal-anim {
+            animation: ticker-goal-slide 6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes ticker-goal-slide {
+            0% { transform: translateY(100%); }
+            10% { transform: translateY(0); }
+            90% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+
+        .flash-row-up {
+            animation: flash-green 3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .flash-row-down {
+            animation: flash-red 3s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        @keyframes flash-green {
+            0% { background-color: rgba(34, 197, 94, 0.6); }
+            100% { background-color: transparent; }
+        }
+
+        @keyframes flash-red {
+            0% { background-color: rgba(239, 68, 68, 0.6); }
+            100% { background-color: transparent; }
         }

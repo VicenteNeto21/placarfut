@@ -2,8 +2,8 @@
 // Lógica de Renderização e Atualização do Painel de Administração
 
 const NOMES_TORNEIOS_FIXOS = {
-    325: "BRASILEIRÃO SÉRIE A", 326: "BRASILEIRÃO SÉRIE B", 327: "BRASILEIRÃO SÉRIE C", 328: "BRASILEIRÃO SÉRIE D",
-    11620: "COPA DO NORDESTE", 2503: "CAMPEONATO CEARENSE", 384: "COPA LIBERTADORES", 480: "COPA SUL-AMERICANA",
+    325: "BRASILEIRÃO SÉRIE A", 390: "BRASILEIRÃO SÉRIE B", 1281: "BRASILEIRÃO SÉRIE C", 10326: "BRASILEIRÃO SÉRIE D",
+    13076: "BRASILEIRÃO FEMININO", 10257: "BRASILEIRÃO FEMININO A1", 73: "COPA DO BRASIL", 11620: "COPA DO NORDESTE", 2503: "CAMPEONATO CEARENSE", 384: "COPA LIBERTADORES", 480: "COPA SUL-AMERICANA",
     11539: "RECOPA SUL-AMERICANA", 17015: "COPA VERDE", 7: "CHAMPIONS LEAGUE", 679: "EUROPA LEAGUE",
     17: "PREMIER LEAGUE", 8: "LA LIGA", 23: "SERIE A (ITÁLIA)", 35: "BUNDESLIGA", 34: "LIGUE 1"
 };
@@ -372,7 +372,7 @@ async function buscarJogosSofaScore(forcar = true) {
         // Filtrar
         cacheJogos = todosEventos.filter(j => {
             // Filtro de Data Local para evitar jogos de "ontem" ou "amanhã" que o SofaScore traz no fuso UTC
-            const dataEventoLocal = new Date(j.startTimestamp * 1000).toLocaleDateString('en-CA', { timeZone: 'America/Fortaleza' });
+            const dataEventoLocal = new Date(j.startTimestamp * 1000).toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
             if (dataEventoLocal !== dataSelecionada) return false;
 
             const { tornId } = getInfoTorneio(j);
@@ -439,10 +439,14 @@ function exibirJogosNaLista(jogos) {
         const logoTorneio = grupo.id ? `${BACKEND_URL}?path=unique-tournament/${grupo.id}/image` : '';
         const aoVivoNoGrupo = grupo.jogos.filter(j => isJogoAoVivo(j)).length;
 
+        const isFixo = CAMPEONATOS_FIXOS_CODIGO.includes(grupo.id);
+        const corTextoTitulo = isFixo ? 'text-emerald-400' : 'text-gray-300';
+        const badgeFixo = isFixo ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">Destaque</span>` : '';
+
         secao.innerHTML = `
             <div class="flex items-center gap-3 mb-3 pb-2 border-b border-gray-700/50">
                 ${logoTorneio ? `<img src="${logoTorneio}" class="w-7 h-7 object-contain rounded" onerror="this.style.display='none'">` : ''}
-                <h3 class="font-black text-sm uppercase tracking-wider text-gray-300">${grupo.nome}</h3>
+                <h3 class="font-black text-sm uppercase tracking-wider ${corTextoTitulo} flex items-center">${grupo.nome} ${badgeFixo}</h3>
                 ${aoVivoNoGrupo > 0 ? `<span class="status-live px-2 py-0.5 rounded text-[10px] font-black inline-flex items-center gap-1"><i class="fa-solid fa-circle fa-beat-fade" style="font-size:6px"></i> ${aoVivoNoGrupo} AO VIVO</span>` : ''}
                 <span class="text-gray-600 text-xs ml-auto">${grupo.jogos.length} jogo${grupo.jogos.length > 1 ? 's' : ''}</span>
             </div>
@@ -453,7 +457,11 @@ function exibirJogosNaLista(jogos) {
 
         grupo.jogos.forEach(jogo => {
             const btn = document.createElement("button");
-            btn.className = "bg-gray-700/60 hover:bg-gray-600 p-3.5 rounded-xl text-left flex justify-between items-center border border-gray-600/50 transition-all hover:scale-[1.01] hover:border-blue-500/50";
+            if (isFixo) {
+                btn.className = "bg-gradient-to-r from-emerald-900/20 to-gray-800/60 hover:from-emerald-900/40 hover:to-gray-700/80 p-3.5 rounded-xl text-left flex justify-between items-center border border-emerald-500/30 transition-all hover:scale-[1.01] hover:border-emerald-400/60 shadow-sm shadow-emerald-900/10";
+            } else {
+                btn.className = "bg-gray-700/60 hover:bg-gray-600 p-3.5 rounded-xl text-left flex justify-between items-center border border-gray-600/50 transition-all hover:scale-[1.01] hover:border-blue-500/50";
+            }
 
             const status = getStatusJogo(jogo);
             let golsC = jogo.homeScore?.current ?? '-';
@@ -526,4 +534,3 @@ function tickCronometrosDaLista() {
         el.innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
     });
 }
-

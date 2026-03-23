@@ -5,6 +5,7 @@
 let modoAtual = 'auto'; // 'auto' ou 'manual'
 let jogoSelecionadoId = null;
 let ultimoPlacar = { casa: -1, fora: -1 };
+let ultimoPlacarTicker = {}; // Guarda placares do Giro da Rodada para detectar gols simultâneos
 
 // Timers e Intervals
 let loopDados = null;
@@ -27,6 +28,14 @@ let torneiosOcultos = JSON.parse(localStorage.getItem('futlive_ocultos')) || [];
 // Estado do Manual
 let manValGolsCasa = 0;
 let manValGolsFora = 0;
+
+// Estados Especiais do Placar
+let isVARActive = false;
+let ultimosIncidentesIds = new Set();
+let primeiraCargaIncidentes = true;
+let teamColorCasa = '#3b82f6';
+let teamColorFora = '#ef4444';
+let mostrarH2H = false;
 
 // ========== TORNEIOS CUSTOMIZADOS (LocalStorage) ==========
 let meusTorneios = JSON.parse(localStorage.getItem('futlive_torneios')) || [];

@@ -3,15 +3,13 @@
 
 function getDataComOffset(offset = 0) {
     const agora = new Date();
-    // Ajuste simples para o fuso de Fortaleza (UTC-3)
-    const utc = agora.getTime() + (agora.getTimezoneOffset() * 60000);
-    const fortaleza = new Date(utc + (3600000 * -3));
-    
-    fortaleza.setDate(fortaleza.getDate() + offset);
-    const y = fortaleza.getFullYear();
-    const m = String(fortaleza.getMonth() + 1).padStart(2, '0');
-    const d = String(fortaleza.getDate()).padStart(2, '0');
-    return { iso: `${y}-${m}-${d}`, dateObj: fortaleza };
+    const base = new Date(agora.toLocaleString('en-US', { timeZone: APP_TIMEZONE }));
+    base.setDate(base.getDate() + offset);
+
+    const y = base.getFullYear();
+    const m = String(base.getMonth() + 1).padStart(2, '0');
+    const d = String(base.getDate()).padStart(2, '0');
+    return { iso: `${y}-${m}-${d}`, dateObj: base };
 }
 
 function isJogoAoVivo(jogo) {

@@ -1,6 +1,26 @@
 // ========== js/manual.js ==========
 // Lógica de Controle do Modo Manual e Atualização Visual do Modo Manual
 
+function resetarPlacarManual() {
+    manValGolsCasa = 0;
+    manValGolsFora = 0;
+    document.getElementById("manCasaGolsDisplay").innerText = "0";
+    document.getElementById("manForaGolsDisplay").innerText = "0";
+    document.getElementById("manMin").value = "0";
+    document.getElementById("manSeg").value = "0";
+    document.getElementById("manAcrescimo").value = "0";
+    document.getElementById("manPenCasa").value = "";
+    document.getElementById("manPenFora").value = "";
+    document.getElementById("manAgrCasa").value = "";
+    document.getElementById("manAgrFora").value = "";
+    document.getElementById("manSubIn").value = "";
+    document.getElementById("manSubOut").value = "";
+    document.getElementById("manPeriodo").value = "PRÉ-JOGO";
+    document.getElementById("manTema").value = "";
+    if (document.getElementById("uiTransmissao").style.display === "block") atualizarPlacarManualNoOBS();
+    if (isVARActive) toggleVAR();
+}
+
 function manGols(time, delta) {
     if (time === 'casa') {
         manValGolsCasa += delta;
@@ -49,10 +69,29 @@ function iniciarTransmissaoManual() {
     document.getElementById("tvStatsBar").classList.add("hidden");
     document.getElementById("tvRedCardCasa").classList.add("hidden");
     document.getElementById("tvRedCardFora").classList.add("hidden");
+    const elYcCasa = document.getElementById("tvYellowCardCasa");
+    if(elYcCasa) elYcCasa.classList.add("hidden");
+    const elYcFora = document.getElementById("tvYellowCardFora");
+    if(elYcFora) elYcFora.classList.add("hidden");
+    document.getElementById("tvAgregado")?.classList.add("hidden");
+    document.getElementById("tvPenaltisCasa")?.classList.add("hidden");
+    document.getElementById("tvPenaltisFora")?.classList.add("hidden");
+    document.getElementById("tvAcrescimo")?.classList.add("hidden");
     atualizarPlacarManualNoOBS();
 }
 
 function atualizarPlacarManualNoOBS() {
+    const tema = document.getElementById("manTema").value;
+    const placar = document.getElementById("placarCard");
+    if (placar) {
+        placar.className = "placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10";
+        if (tema) {
+            placar.classList.add(tema);
+            placar.classList.remove("rounded-xl");
+            placar.classList.add("layout-copa");
+        }
+    }
+
     document.getElementById("tvCampeonato").innerHTML = document.getElementById("manCamp").value.toUpperCase() || "AMISTOSO";
     document.getElementById("tvNomeCasa").innerHTML = document.getElementById("manCasaNome").value.toUpperCase().substring(0, 4) || "CASA";
     document.getElementById("tvNomeFora").innerHTML = document.getElementById("manForaNome").value.toUpperCase().substring(0, 4) || "FORA";
@@ -72,7 +111,8 @@ function atualizarPlacarManualNoOBS() {
     const periodo = document.getElementById("manPeriodo").value;
     if (periodo === "INTERVALO" || periodo === "PRÉ-JOGO" || periodo === "FIM DE JOGO") {
         document.getElementById("tvPeriodo").innerHTML = periodo;
-        document.getElementById("tvPeriodo").classList.replace("text-yellow-400", "text-gray-400");
+        document.getElementById("tvPeriodo").classList.remove("theme-text", "text-sky-400");
+        document.getElementById("tvPeriodo").classList.add("text-gray-400");
         document.getElementById("tvBadgeAoVivo").classList.replace("text-red-500", "text-gray-500");
         document.getElementById("tvBolinhaAoVivo").classList.replace("bg-red-500", "bg-gray-500");
         document.getElementById("tvBadgeAoVivo").classList.remove("animate-pulse");
@@ -81,10 +121,51 @@ function atualizarPlacarManualNoOBS() {
         let m = String(document.getElementById("manMin").value || 0).padStart(2, '0');
         let s = String(document.getElementById("manSeg").value || 0).padStart(2, '0');
         document.getElementById("tvPeriodo").innerHTML = `${m}:${s}`;
-        document.getElementById("tvPeriodo").classList.replace("text-gray-400", "text-yellow-400");
+        document.getElementById("tvPeriodo").classList.add("theme-text");
+        document.getElementById("tvPeriodo").classList.remove("text-gray-400", "text-sky-400");
         document.getElementById("tvBadgeAoVivo").classList.replace("text-gray-500", "text-red-500");
         document.getElementById("tvBolinhaAoVivo").classList.replace("bg-gray-500", "bg-red-500");
         document.getElementById("tvBadgeAoVivo").classList.add("animate-pulse");
         document.getElementById("tvTextoBadge").innerHTML = "AO VIVO";
+    }
+
+    const acrescimo = parseInt(document.getElementById("manAcrescimo")?.value) || 0;
+    const elAcrescimo = document.getElementById("tvAcrescimo");
+    if (elAcrescimo) {
+        if (acrescimo > 0) {
+            elAcrescimo.innerHTML = `+${acrescimo}`;
+            elAcrescimo.classList.remove("hidden");
+        } else {
+            elAcrescimo.classList.add("hidden");
+        }
+    }
+
+    const penC = document.getElementById("manPenCasa")?.value;
+    const penF = document.getElementById("manPenFora")?.value;
+    const elPenC = document.getElementById("tvPenaltisCasa");
+    const elPenF = document.getElementById("tvPenaltisFora");
+    if (elPenC && elPenF) {
+        if (penC && penF) {
+            elPenC.innerHTML = `(${penC})`; elPenF.innerHTML = `(${penF})`;
+            elPenC.classList.remove("hidden"); elPenF.classList.remove("hidden");
+        } else {
+            elPenC.classList.add("hidden"); elPenF.classList.add("hidden");
+        }
+    }
+
+    const agrC = document.getElementById("manAgrCasa")?.value;
+    const agrF = document.getElementById("manAgrFora")?.value;
+    const elAgr = document.getElementById("tvAgregado");
+    if (elAgr) {
+        if (agrC && agrF) { elAgr.innerHTML = `AGR. ${agrC} - ${agrF}`; elAgr.classList.remove("hidden"); } 
+        else { elAgr.classList.add("hidden"); }
+    }
+}
+
+function dispararSubstituicaoManual() {
+    const inName = document.getElementById("manSubIn").value || "Jogador Entra";
+    const outName = document.getElementById("manSubOut").value || "Jogador Sai";
+    if (typeof mostrarNotificacaoSubstituicao === 'function') {
+        mostrarNotificacaoSubstituicao(inName, outName);
     }
 }

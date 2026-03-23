@@ -3,14 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FutLivePRO - Placar Futebol Brasileiro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link
         href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&family=Montserrat:wght@800;900&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 
 <body class="w-screen h-screen">
@@ -34,11 +34,11 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2">
-                    <button onclick="mudarAba('auto')" id="tabAuto"
+                    <button onclick="mudarAba('auto')" id="tabAuto" title="Ver Jogos Automáticos"
                         class="tab-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all">
                         <i class="fa-solid fa-futbol mr-1"></i> Jogos
                     </button>
-                    <button onclick="mudarAba('manual')" id="tabManual"
+                    <button onclick="mudarAba('manual')" id="tabManual" title="Configurar Placar Manual"
                         class="tab-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">
                         <i class="fa-solid fa-gamepad mr-1"></i> Manual
                     </button>
@@ -46,7 +46,7 @@
             </div>
         </div>
 
-        <!-- Aba SOFASCORE -->
+        <!-- Aba Automática -->
         <div id="contentAuto" class="tab-content active">
             <div class="w-full mx-auto px-6 py-6 pb-20">
 
@@ -54,7 +54,7 @@
                 <div class="flex flex-col md:flex-row items-stretch md:items-center gap-4 mb-6">
                     <!-- Navegação de data -->
                     <div class="flex items-center gap-2 bg-white/5 border border-white/10 py-2 px-3 rounded-xl">
-                        <button onclick="mudarData(-1)"
+                        <button onclick="mudarData(-1)" title="Dia Anterior"
                             class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                             <i class="fa-solid fa-chevron-left text-xs"></i>
                         </button>
@@ -63,7 +63,7 @@
                             <span id="dataBadge"
                                 class="ml-1.5 bg-emerald-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded hidden">HOJE</span>
                         </div>
-                        <button onclick="mudarData(1)"
+                        <button onclick="mudarData(1)" title="Próximo Dia"
                             class="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white flex items-center justify-center transition-colors">
                             <i class="fa-solid fa-chevron-right text-xs"></i>
                         </button>
@@ -108,7 +108,7 @@
                     <h3 class="text-white font-black text-lg flex items-center gap-2">
                         <i class="fa-solid fa-list-check text-emerald-400"></i> Campeonatos Favoritos
                     </h3>
-                    <button onclick="fecharModalTorneios()"
+                    <button onclick="fecharModalTorneios()" title="Fechar"
                         class="text-gray-400 hover:text-white transition-colors cursor-pointer w-8 h-8 flex justify-center items-center bg-white/5 rounded-lg">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
@@ -124,7 +124,7 @@
                         <label class="block text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2">Adicionar
                             Torneio (Jogos de Hoje)</label>
                         <div class="flex gap-2">
-                            <select id="selectNovosTorneios"
+                            <select id="selectNovosTorneios" title="Selecionar torneio disponível"
                                 class="flex-1 bg-gray-800 text-sm px-3 py-2 rounded-lg border border-gray-700 text-white focus:outline-none focus:border-emerald-500">
                                 <option value="">Carregando torneios disponíveis...</option>
                             </select>
@@ -184,7 +184,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div class="md:col-span-2">
                             <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Campeonato</label>
-                            <input type="text" id="manCamp" value="FUTEBOL LOCAL">
+                            <input type="text" id="manCamp" value="FUTEBOL LOCAL" title="Nome do Campeonato" placeholder="Ex: Brasileirão">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Tema do Placar</label>
+                            <select id="manTema" onchange="atualizarPlacarManualNoOBS()">
+                                <option value="">Padrão (Azul/Grafite)</option>
+                                <option value="theme-libertadores">Libertadores (Dourado/Preto)</option>
+                                <option value="theme-sulamericana">Sul-Americana (Azul Escuro)</option>
+                                <option value="theme-nordeste">Copa do Nordeste (Laranja/Marrom)</option>
+                                <option value="theme-brasil">Copa do Brasil (Verde Escuro)</option>
+                                <option value="theme-verde">Copa Verde (Verde Esmeralda)</option>
+                                <option value="theme-feminino">Brasileirão Feminino (Rosa)</option>
+                            </select>
                         </div>
                         <!-- Time Casa -->
                         <div class="bg-white/5 p-5 rounded-xl border border-white/10">
@@ -192,9 +204,9 @@
                                 <i class="fa-solid fa-shield-halved mr-1"></i> Time Casa
                             </h4>
                             <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sigla</label>
-                            <input type="text" id="manCasaNome" value="CASA" class="mb-3">
+                            <input type="text" id="manCasaNome" value="CASA" class="mb-3" title="Sigla do Time da Casa" placeholder="Ex: FLA">
                             <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Link Logo</label>
-                            <input type="text" id="manCasaLogo" class="mb-4" placeholder="https://...">
+                            <input type="text" id="manCasaLogo" class="mb-4" title="URL da Logo do Time da Casa" placeholder="https://...">
                             <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg">
                                 <span class="font-bold text-sm text-gray-300">Gols</span>
                                 <div class="flex items-center gap-3">
@@ -213,9 +225,9 @@
                                 <i class="fa-solid fa-shield-halved mr-1"></i> Time Fora
                             </h4>
                             <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sigla</label>
-                            <input type="text" id="manForaNome" value="FORA" class="mb-3">
+                            <input type="text" id="manForaNome" value="FORA" class="mb-3" title="Sigla do Time de Fora" placeholder="Ex: VAS">
                             <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Link Logo</label>
-                            <input type="text" id="manForaLogo" class="mb-4" placeholder="https://...">
+                            <input type="text" id="manForaLogo" class="mb-4" title="URL da Logo do Time de Fora" placeholder="https://...">
                             <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg">
                                 <span class="font-bold text-sm text-gray-300">Gols</span>
                                 <div class="flex items-center gap-3">
@@ -233,7 +245,7 @@
                             class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap items-center gap-5">
                             <div class="flex-1 min-w-[150px]">
                                 <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Período</label>
-                                <select id="manPeriodo" onchange="atualizarPlacarManualNoOBS()">
+                            <select id="manPeriodo" title="Selecionar Período do Jogo" onchange="atualizarPlacarManualNoOBS()">
                                     <option value="PRÉ-JOGO">Pré-Jogo</option>
                                     <option value="1º T">1º Tempo</option>
                                     <option value="INTERVALO">Intervalo</option>
@@ -243,16 +255,70 @@
                             </div>
                             <div class="flex items-center gap-3 bg-black/30 px-4 py-2.5 rounded-lg">
                                 <input type="number" id="manMin" value="0"
-                                    class="w-14 text-center text-xl font-black p-1">
+                                    class="w-14 text-center text-xl font-black p-1" title="Minutos" placeholder="00">
                                 <span class="text-2xl font-black text-gray-400">:</span>
                                 <input type="number" id="manSeg" value="0"
-                                    class="w-14 text-center text-xl font-black p-1">
+                                    class="w-14 text-center text-xl font-black p-1" title="Segundos" placeholder="00">
+                            </div>
+                            <div class="flex flex-col ml-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Acréscimos</label>
+                                <div class="flex items-center gap-1 bg-black/30 px-3 py-2.5 rounded-lg border border-transparent focus-within:border-red-500">
+                                    <span class="text-lg font-black text-red-500">+</span>
+                                    <input type="number" id="manAcrescimo" value="0"
+                                        class="w-12 text-center text-xl font-black p-0 text-red-400 bg-transparent border-none outline-none focus:ring-0" title="Acréscimos" oninput="atualizarPlacarManualNoOBS()">
+                                </div>
                             </div>
                             <button onclick="toggleManualTimer()" id="btnManTimer"
                                 class="bg-white/10 hover:bg-emerald-600 px-5 py-2.5 rounded-lg font-black text-sm transition-colors text-white">
                                 <i class="fa-solid fa-play mr-1"></i> PLAY
                             </button>
                         </div>
+
+                        <!-- Pênaltis e Agregado (Manual) -->
+                        <div class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap gap-5">
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Pênaltis (Casa x Fora)</label>
+                                <div class="flex items-center gap-3 bg-black/30 px-3 py-2 rounded-lg border border-transparent focus-within:border-yellow-500">
+                                    <input type="number" id="manPenCasa" class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-yellow-400" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                    <span class="text-gray-500 font-black">X</span>
+                                    <input type="number" id="manPenFora" class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-yellow-400" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                </div>
+                            </div>
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Agregado (Casa x Fora)</label>
+                                <div class="flex items-center gap-3 bg-black/30 px-3 py-2 rounded-lg border border-transparent focus-within:border-blue-500">
+                                    <input type="number" id="manAgrCasa" class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-white" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                    <span class="text-gray-500 font-black">X</span>
+                                    <input type="number" id="manAgrFora" class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-white" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                </div>
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="toggleVAR()" id="btnManVAR" class="bg-gray-800 hover:bg-fuchsia-600 text-fuchsia-500 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-full border border-fuchsia-500/20 shadow-md flex items-center gap-1">
+                                    <i class="fa-solid fa-tv"></i> VAR
+                                </button>
+                                <button onclick="resetarPlacarManual()" class="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-full border border-red-500/20 shadow-md">
+                                    <i class="fa-solid fa-rotate-left"></i> Limpar Tudo
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Substituição (Manual) -->
+                        <div class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap gap-5">
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Entra (IN)</label>
+                                <input type="text" id="manSubIn" class="w-full text-sm font-bold p-2.5 bg-black/30 rounded-lg border border-transparent focus:border-green-500 text-green-400 outline-none" placeholder="Ex: Pedro (9)">
+                            </div>
+                            <div class="flex-1 min-w-[150px]">
+                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sai (OUT)</label>
+                                <input type="text" id="manSubOut" class="w-full text-sm font-bold p-2.5 bg-black/30 rounded-lg border border-transparent focus:border-red-500 text-red-400 outline-none" placeholder="Ex: Gabriel B. (10)">
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="dispararSubstituicaoManual()" class="bg-gray-800 hover:bg-indigo-600 text-indigo-400 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-[44px] border border-indigo-500/20 shadow-md flex items-center gap-2">
+                                    <i class="fa-solid fa-rotate"></i> Mostrar Placa
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Botão Transmitir -->
                         <button onclick="iniciarTransmissaoManual()"
                             class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white py-4 rounded-xl font-black text-lg uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
@@ -262,11 +328,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
-
-
-
     </div>
 
     <!-- TELA DE TRANSMISSÃO (PLACAR) -->
@@ -281,34 +342,57 @@
                 class="bg-gray-900/80 hover:bg-yellow-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-yellow-500 backdrop-blur-md opacity-20 hover:opacity-100">
                 <i class="fa-solid fa-futbol"></i> GOLS
             </button>
+            <button onclick="toggleTabela()" id="btnToggleTabela"
+                class="bg-gray-900/80 hover:bg-blue-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-blue-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-solid fa-table-list"></i> TABELA
+            </button>
+            <button onclick="toggleEstatisticas()" id="btnToggleStats"
+                class="bg-gray-900/80 hover:bg-purple-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-purple-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-solid fa-chart-pie"></i> ESTATÍSTICAS
+            </button>
+            <button onclick="testarEfeitos()"
+                class="bg-gray-900/80 hover:bg-pink-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-pink-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-solid fa-vial"></i> TESTAR EFEITOS
+            </button>
+            <button onclick="toggleVAR()" id="btnToggleVAR"
+                class="bg-gray-900/80 hover:bg-fuchsia-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-fuchsia-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-solid fa-tv"></i> VAR
+            </button>
+            <button onclick="toggleH2H()" id="btnToggleH2H"
+                class="bg-gray-900/80 hover:bg-orange-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-orange-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-solid fa-fire"></i> H2H
+            </button>
         </div>
 
         <!-- OVERLAY DE GOL -->
         <div id="overlayGol"
-            class="hidden fixed top-1/2 left-1/2 z-[100] pointer-events-none flex flex-col items-center justify-center">
-            <span
-                class="text-[140px] font-black italic tracking-tighter text-white uppercase drop-shadow-[0_10px_30px_rgba(220,38,38,0.8)]"
-                style="-webkit-text-stroke: 4px #dc2626;">GOL!</span>
+            class="hidden fixed top-1/2 left-1/2 z-[100] pointer-events-none flex flex-col items-center justify-center w-full">
+            <div class="relative flex items-center justify-center bg-gray-900 border border-gray-700 px-16 py-6 rounded-[3rem] shadow-[0_25px_50px_rgba(0,0,0,0.8)]">
+                <i class="fa-solid fa-futbol text-sky-400 text-6xl mr-8 animate-bounce"></i>
+                <span class="text-[100px] leading-none font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-gray-400 drop-shadow-lg">
+                    GOL!
+                </span>
+            </div>
         </div>
 
         <div id="placarWrapper" style="bottom: 55px; left: 50%; transform: translateX(-50%);">
-            <div id="placarCard" class="placar-compacto rounded-xl flex flex-col overflow-hidden">
+            <div id="placarCard" class="placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10">
                 <div id="dragHandle"
-                    class="drag-handle bg-gray-900 px-6 py-1 flex justify-between items-center border-b border-gray-700 hover:bg-gray-800">
+                    class="drag-handle theme-bg-dark px-6 py-1 flex justify-between items-center border-b theme-border hover:bg-black/20 transition-colors">
                     <span class="flex items-center gap-2 w-1/3">
                         <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16">
                             </path>
                         </svg>
                         <span id="tvCampeonato"
-                            class="text-gray-400 font-bold uppercase tracking-widest text-xs truncate">SOFASCORE
+                            class="text-gray-400 font-bold uppercase tracking-widest text-xs truncate">FUTLIVE
                             LIVE</span>
                     </span>
                     <div class="flex items-center justify-center gap-2 w-1/3" onmousedown="event.stopPropagation()">
-                        <button onclick="mudarTamanho(-0.05)"
+                        <button onclick="mudarTamanho(-0.05)" title="Diminuir Placar"
                             class="bg-gray-700 hover:bg-red-600 text-white w-6 h-6 rounded font-black text-sm">-</button>
                         <span id="textoTamanho" class="text-xs text-gray-400 font-bold w-10 text-center">100%</span>
-                        <button onclick="mudarTamanho(0.05)"
+                        <button onclick="mudarTamanho(0.05)" title="Aumentar Placar"
                             class="bg-gray-700 hover:bg-green-600 text-white w-6 h-6 rounded font-black text-sm">+</button>
                     </div>
                     <div id="tvBadgeAoVivo"
@@ -318,8 +402,9 @@
                     </div>
                 </div>
                 <div
-                    class="flex justify-between items-stretch text-white h-[70px] cursor-default pointer-events-none relative">
-                    <div class="flex-1 flex items-center justify-end gap-3 px-6 bg-white/5 relative">
+                    class="flex justify-between items-stretch text-white min-h-[70px] cursor-default pointer-events-none relative">
+                    <div class="flex-1 flex items-center justify-end gap-3 px-6 theme-bg relative overflow-hidden">
+                        <span id="tvYellowCardCasa" class="yellow-card absolute top-3 left-10 hidden"></span>
                         <span id="tvRedCardCasa" class="red-card absolute top-3 left-4 hidden"></span>
                         <span id="tvNomeCasa"
                             class="font-black text-2xl xl:text-3xl uppercase tracking-tighter truncate text-right">CASA</span>
@@ -328,50 +413,154 @@
                             referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
                     </div>
                     <div
-                        class="flex flex-col items-center justify-center bg-black/80 px-8 min-w-[220px] border-x border-gray-800">
-                        <div class="flex items-center justify-center gap-4 w-full">
-                            <span id="tvGolsCasa"
-                                class="font-black text-4xl leading-none transition-all duration-300">0</span>
-                            <span class="font-bold text-xl text-gray-600">X</span>
-                            <span id="tvGolsFora"
-                                class="font-black text-4xl leading-none transition-all duration-300">0</span>
+                        class="flex flex-col items-center justify-center theme-center-bg px-8 py-2 min-w-[220px] border-x theme-border shadow-inner relative overflow-hidden">
+                        
+                        <!-- VAR OVERLAY -->
+                        <div id="tvVAROverlay" class="absolute inset-0 bg-fuchsia-700 z-20 hidden flex-col items-center justify-center animate-pulse">
+                            <span class="text-white font-black italic tracking-widest text-2xl drop-shadow-md">VAR</span>
+                            <span class="text-fuchsia-200 text-[8px] font-bold uppercase tracking-widest">Revisão</span>
+                        </div>
+
+                        <div class="flex items-center justify-center w-full flex-wrap gap-y-1">
+                            <span id="tvPenaltisCasa" class="hidden theme-text text-lg font-black theme-bg-dark px-1.5 py-0.5 rounded border theme-border mr-3 shadow-md">(0)</span>
+                            <div class="flex items-center justify-center gap-4">
+                                <span id="tvGolsCasa" class="font-black text-4xl leading-none transition-all duration-300">0</span>
+                                <span class="font-bold text-xl text-gray-600">X</span>
+                                <span id="tvGolsFora" class="font-black text-4xl leading-none transition-all duration-300">0</span>
+                            </div>
+                            <span id="tvPenaltisFora" class="hidden theme-text text-lg font-black theme-bg-dark px-1.5 py-0.5 rounded border theme-border ml-3 shadow-md">(0)</span>
                         </div>
                         <div class="mt-1 flex items-center justify-center gap-1">
                             <span id="tvPeriodLabel"
                                 class="text-[10px] text-gray-400 font-black tracking-widest hidden mt-0.5">1T</span>
                             <span id="tvPeriodo"
-                                class="text-sm font-black text-yellow-400 font-['Roboto_Condensed'] tracking-wider">00:00</span>
+                                class="text-sm font-black theme-text font-['Roboto_Condensed'] tracking-wider">00:00</span>
                             <span id="tvAcrescimo"
-                                class="bg-red-600 text-white text-xs font-black px-1.5 py-0.5 rounded ml-1 hidden">+0</span>
+                                class="bg-red-600 border border-red-500 text-white text-xs font-black px-1.5 py-0.5 rounded ml-1 hidden shadow-md">+0</span>
                         </div>
+                        <div id="tvAgregado" class="hidden text-[9px] font-bold text-gray-400 tracking-widest mt-1 uppercase theme-bg-dark border theme-border px-2 py-0.5 rounded-full shadow-inner">AGR. 0 - 0</div>
                     </div>
-                    <div class="flex-1 flex items-center justify-start gap-3 px-6 bg-white/5 relative">
+                    <div class="flex-1 flex items-center justify-start gap-3 px-6 theme-bg relative overflow-hidden">
                         <img id="imgLogoFora" src=""
                             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%%25%22 y=%2255%%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'"
                             referrerpolicy="no-referrer" class="w-12 h-12 object-contain drop-shadow-lg flex-shrink-0">
                         <span id="tvNomeFora"
                             class="font-black text-2xl xl:text-3xl uppercase tracking-tighter truncate text-left">FORA</span>
+                        <span id="tvYellowCardFora" class="yellow-card absolute top-3 right-10 hidden"></span>
                         <span id="tvRedCardFora" class="red-card absolute top-3 right-4 hidden"></span>
                     </div>
                 </div>
                 <div id="tvScorersBar"
-                    class="w-full bg-black/95 border-t border-gray-800 text-[11px] font-bold px-6 py-2 flex justify-between hidden font-['Roboto_Condensed'] transition-all">
+                    class="w-full theme-center-bg border-t theme-border text-[11px] font-bold px-6 py-2 flex justify-between hidden font-['Roboto_Condensed'] transition-all">
                     <div id="tvScorersCasa"
-                        class="flex-1 text-left pr-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis">
+                        class="flex-1 text-left pr-2 theme-text whitespace-nowrap overflow-hidden text-ellipsis">
                     </div>
                     <div class="text-gray-600 text-[10px] mx-2 flex items-center flex-shrink-0"><i
                             class="fa-solid fa-futbol"></i></div>
                     <div id="tvScorersFora"
-                        class="flex-1 text-right pl-2 text-yellow-400 whitespace-nowrap overflow-hidden text-ellipsis">
+                        class="flex-1 text-right pl-2 theme-text whitespace-nowrap overflow-hidden text-ellipsis">
+                    </div>
+                </div>
+                <div id="tvStatsBar"
+                    class="w-full theme-bg-dark border-t theme-border text-[11px] font-bold px-6 py-2 flex justify-between hidden font-['Roboto_Condensed'] transition-all">
+                    <div class="flex-1 flex justify-center items-center gap-8">
+                        <div class="flex flex-col w-full max-w-[250px] gap-1">
+                            <div class="flex justify-between items-end text-[10px]">
+                                <span id="tvPosseCasa" class="font-black text-white text-xs">50%</span>
+                                <span class="text-gray-500 font-bold uppercase tracking-widest text-[9px]"><i class="fa-solid fa-chart-pie"></i> Posse de Bola</span>
+                                <span id="tvPosseFora" class="font-black text-white text-xs">50%</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-gray-800 rounded-full flex overflow-hidden">
+                                <div id="tvPosseBarraCasa" class="h-full bg-blue-500 transition-all duration-500" style="width: 50%;"></div>
+                                <div id="tvPosseBarraFora" class="h-full bg-red-500 transition-all duration-500" style="width: 50%;"></div>
+                            </div>
+                        </div>
+                        <span class="text-gray-700">|</span>
+                        <div class="flex items-center gap-2"><i class="fa-solid fa-bullseye text-gray-500"></i> <span class="text-gray-500 text-[9px] uppercase tracking-widest">Chutes no Gol</span> <span id="tvChutesCasa" class="text-white font-black ml-1">0</span> <span class="text-gray-600">-</span> <span id="tvChutesFora" class="text-white font-black">0</span></div>
+                    </div>
+                </div>
+                <!-- BARRA DE PÊNALTIS -->
+                <div id="tvPenaltyBar" class="w-full theme-center-bg border-t theme-border px-6 py-2.5 flex justify-between hidden transition-all items-center">
+                    <div id="tvPenaltyDotsCasa" class="flex gap-1.5 justify-start flex-1"></div>
+                    <div class="text-gray-500 text-[9px] uppercase tracking-widest px-4 font-black text-center leading-none">Pênaltis</div>
+                    <div id="tvPenaltyDotsFora" class="flex gap-1.5 justify-end flex-1"></div>
+                </div>
+            </div>
+            <!-- BANNER DE SUBSTITUIÇÃO -->
+            <div class="absolute top-full left-0 w-full flex justify-center -z-10">
+                <div id="tvSubBanner" class="bg-gray-900 border border-gray-700 border-t-0 rounded-b-xl px-6 py-2 flex items-center gap-4 shadow-xl transition-all duration-500 -translate-y-full opacity-0">
+                    <span class="text-gray-400 text-[9px] font-black uppercase tracking-widest flex items-center gap-1"><i class="fa-solid fa-rotate"></i> Sub</span>
+                    <span class="text-green-500 text-[10px] font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrow-right-to-bracket"></i> <span id="tvSubIn" class="text-white"></span></span>
+                    <span class="text-red-500 text-[10px] font-bold flex items-center gap-1.5"><i class="fa-solid fa-arrow-right-from-bracket"></i> <span id="tvSubOut" class="text-white"></span></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAINEL DE TABELA -->
+        <div id="tvPanelTabela" class="absolute top-20 right-6 w-80 bg-gray-900 border border-gray-700 rounded-xl overflow-hidden shadow-2xl transition-all duration-300 transform translate-x-[120%] opacity-0 z-40 flex flex-col max-h-[calc(100vh-160px)]">
+            <div class="bg-gradient-to-b from-gray-800 to-gray-900 border-b border-gray-700 text-white font-black px-3 py-2 flex items-center justify-between shadow-md">
+                <span class="flex items-center gap-2 uppercase tracking-widest text-xs"><i class="fa-solid fa-table-list text-sky-400"></i> Classificação</span>
+                <span id="tabNomeCamp" class="text-[9px] bg-black px-2 py-0.5 rounded font-bold uppercase truncate max-w-[120px] border border-gray-700"></span>
+            </div>
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-1">
+                <table class="w-full text-left text-xs text-white">
+                    <thead class="text-gray-400 border-b border-gray-700 text-[10px]">
+                        <tr>
+                            <th class="pb-1 font-normal pl-2 w-14 text-left">POS</th>
+                            <th class="pb-1 font-normal">TIME</th>
+                            <th class="pb-1 font-normal text-center w-6" title="Pontos">P</th>
+                            <th class="pb-1 font-normal text-center w-6" title="Jogos">J</th>
+                            <th class="pb-1 font-normal text-center w-6" title="Saldo de Gols">SG</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabTabelaBody">
+                        <tr><td colspan="5" class="text-center py-4 text-gray-500">Aguardando...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PAINEL PRÉ-JOGO: FRENTE A FRENTE (H2H) -->
+        <div id="tvH2HOverlay" class="hidden fixed inset-0 z-[40] flex items-center justify-center bg-black/80 backdrop-blur-md transition-opacity">
+            <div class="bg-gray-900 border border-gray-700 p-10 rounded-[2rem] shadow-2xl flex flex-col items-center w-[800px] relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full bg-gray-800 py-2.5 text-center border-b border-gray-700 flex justify-center items-center">
+                    <span class="text-gray-400 text-[10px] font-black uppercase tracking-widest"><i class="fa-solid fa-fire text-orange-500"></i> Frente a Frente</span>
+                    <button onclick="toggleH2H()" class="absolute right-4 text-gray-400 hover:text-white transition-colors cursor-pointer w-6 h-6 flex justify-center items-center"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+                <div class="flex justify-between items-center w-full mt-10 gap-8">
+                    <div class="flex flex-col items-center gap-5 flex-1">
+                        <img id="h2hLogoCasa" src="" class="w-36 h-36 object-contain drop-shadow-2xl">
+                        <span id="h2hNomeCasa" class="text-4xl font-black text-white uppercase tracking-tighter truncate w-full text-center">CASA</span>
+                        <div id="h2hFormCasa" class="flex gap-2 mt-2"></div>
+                    </div>
+                    <div class="flex flex-col items-center justify-center pb-8">
+                        <span class="text-gray-600 font-black text-4xl italic px-4">VS</span>
+                    </div>
+                    <div class="flex flex-col items-center gap-5 flex-1">
+                        <img id="h2hLogoFora" src="" class="w-36 h-36 object-contain drop-shadow-2xl">
+                        <span id="h2hNomeFora" class="text-4xl font-black text-white uppercase tracking-tighter truncate w-full text-center">FORA</span>
+                        <div id="h2hFormFora" class="flex gap-2 mt-2"></div>
                     </div>
                 </div>
             </div>
         </div>
+
         <div class="ticker-container cursor-default">
-            <div class="ticker-label">GIRO DA RODADA</div>
+            <div id="tickerLabel" class="ticker-label bg-gradient-to-b from-gray-900 to-black border-r border-gray-700 overflow-hidden relative min-w-[300px] flex justify-center z-[5]">
+                <div id="tickerLabelText" class="absolute inset-0 flex items-center justify-center w-full px-4 whitespace-nowrap transition-all duration-500">
+                    <i class="fa-solid fa-bolt mr-2 text-sky-400"></i> GIRO DA RODADA
+                </div>
+            </div>
             <div class="ticker-wrap">
                 <div id="tvTicker" class="ticker-move">
                     <div class="ticker-item text-gray-500 font-normal">Aguardando dados...</div>
+                </div>
+            </div>
+
+            <!-- OVERLAY GOL NO GIRO -->
+            <div id="tickerGoalOverlay" class="absolute inset-0 w-full h-full bg-gradient-to-b from-gray-900 to-black border-t border-gray-700 z-[60] flex items-center justify-center text-white font-black transition-transform translate-y-full shadow-[0_-10px_30px_rgba(0,0,0,0.8)]">
+                <div class="flex items-center text-lg tracking-widest" id="tickerGoalText">
+                    <!-- Preenchido dinamicamente via JS -->
                 </div>
             </div>
         </div>
