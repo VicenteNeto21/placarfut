@@ -4,7 +4,11 @@
   "description": "Placar de futebol ao vivo - SofaScore + ESPN",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "vercel-dev": "vercel dev"
+  },
+  "engines": {
+    "node": ">=18.x"
   },
   "private": true
 }

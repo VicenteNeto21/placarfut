@@ -1,7 +1,35 @@
 {
+  "version": 2,
   "functions": {
-    "api/sofascore.js": {
-      "regions": ["gru1"]
+    "api/*.js": {
+      "runtime": "vercel-node@latest",
+      "memory": 1024,
+      "maxDuration": 10
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/api/sofascore",
+      "destination": "/api/sofascore.js"
+    },
+    {
+      "source": "/api/espn",
+      "destination": "/api/espn.js"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        }
+      ]
+    }
+  ]
 }

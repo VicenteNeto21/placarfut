@@ -19,17 +19,20 @@
             z-index: 60;
         }
 
-        .placar-compacto {
+        .placar-compacto,
+        .h2h-panel {
             --theme-color: #38bdf8;
             --theme-border-color: #374151;
             --theme-bg-color: #1f2937;
             --theme-bg-dark: #111827;
             --theme-center-bg: #000000;
+        }
 
+        .placar-compacto {
             background: #0a0e17;
             border: 1px solid var(--theme-border-color);
             border-bottom: 4px solid var(--theme-color);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(0, 0, 0, 0.3);
+            box-shadow: none; /* Sombra removida conforme solicitado */
             transform-origin: bottom center;
             transition: transform 0.2s ease-out;
             width: 100%;
@@ -85,6 +88,14 @@
             --theme-center-bg: #000000;
         }
 
+        .theme-nordeste2025 {
+            --theme-color: #FEBA0F;       /* Dourado Nordeste */
+            --theme-border-color: #8B0000;
+            --theme-bg-color: #4A0404;    /* Bordô / Maroon */
+            --theme-bg-dark: #2A0202;
+            --theme-center-bg: #FFFFFF;
+        }
+
         /* ====== MODELO DE PLACAR "COPA OFICIAL" ====== */
         .layout-copa {
             border-radius: 0 !important;
@@ -114,7 +125,8 @@
             gap: 2px;
         }
         .layout-copa .theme-center-bg #tvGolsCasa, 
-        .layout-copa .theme-center-bg #tvGolsFora {
+        .layout-copa .theme-center-bg #tvGolsFora,
+        .layout-copa .theme-center-bg #h2hCountdown {
             color: #000000 !important;
             font-size: 3rem !important;
             line-height: 1 !important;
@@ -122,6 +134,10 @@
         }
         .layout-copa .theme-center-bg .text-gray-600 {
             color: #666666 !important;
+        }
+        .layout-copa .theme-center-bg .text-gray-400 {
+            color: #444444 !important;
+            font-weight: 900 !important;
         }
         .layout-copa #tvPenaltisCasa,
         .layout-copa #tvPenaltisFora {
@@ -158,6 +174,103 @@
             background: var(--theme-bg-dark) !important;
             border-top: 1px solid var(--theme-color) !important;
             border-radius: 0 !important;
+        }
+
+        /* ====== MODELO DE PLACAR "NORDESTE 2025" ====== */
+        #placarCard.layout-nordeste2025 {
+            border-radius: 12px !important;
+            border: 3px solid #C00202 !important; /* Vermelho Brilhante */
+            box-shadow: none !important; /* Sombras removidas */
+        }
+
+        #h2hCard.layout-nordeste2025 {
+            border-radius: 12px !important;
+            border: 3px solid #C00202 !important; /* Vermelho Brilhante */
+            /* Mantém a sombra original no H2H */
+            box-shadow: 0 0 30px rgba(192, 2, 2, 0.4), 0 20px 50px rgba(0, 0, 0, 0.9) !important;
+        }
+        .layout-nordeste2025 #dragHandle {
+            background: linear-gradient(90deg, #4A0404, #C00202) !important;
+            border-bottom: 1px solid rgba(254, 186, 15, 0.3) !important;
+        }
+        .layout-nordeste2025 #dragHandle * {
+            color: #FFFFFF !important;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .layout-nordeste2025 .theme-bg {
+            background: #4A0404 !important;
+        }
+        .layout-nordeste2025 .theme-center-bg {
+            background: #FFFFFF !important;
+            border-left: 2px solid #C00202 !important;
+            border-right: 2px solid #C00202 !important;
+        }
+        .layout-nordeste2025 #tvGolsCasa, 
+        .layout-nordeste2025 #tvGolsFora,
+        .layout-nordeste2025 #h2hCountdown {
+            color: #2A0202 !important;
+            font-size: 3.5rem !important;
+            line-height: 1 !important;
+            font-weight: 900 !important;
+            transform: translateY(-2px);
+        }
+        .layout-nordeste2025 #tvPeriodo {
+            background: #C00202 !important;
+            color: #FFFFFF !important;
+            border: 1px solid #FEBA0F !important;
+            font-size: 1.25rem !important;
+            padding: 4px 12px !important;
+            border-radius: 6px !important;
+            font-weight: 900 !important;
+        }
+        .layout-nordeste2025 #tvLogoComp {
+            display: block !important;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+
+        /* Ajustes de Contraste e Altura para Barra de Gols (Nordeste 2025) */
+        .layout-nordeste2025 #tvScorersBar {
+            border-top: 1px solid rgba(74, 4, 4, 0.1) !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+        }
+        .layout-nordeste2025 #tvScorersBar .theme-text {
+            color: #4A0404 !important; /* Maroon para ler no branco */
+            font-weight: 800;
+        }
+        .layout-nordeste2025 #tvScorersBar .fa-futbol {
+            color: #4A0404 !important;
+            opacity: 0.7;
+        }
+
+        /* Painel de Estatísticas para Nordeste 2025 */
+        .layout-nordeste2025 #tvStatsBar {
+            background: #FFFFFF !important;
+            border-top: 1px solid rgba(74, 4, 4, 0.1) !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+        }
+        .layout-nordeste2025 #tvStatsBar .text-white {
+            color: #4A0404 !important; /* Texto principal em maroon */
+            font-weight: 900 !important;
+        }
+        .layout-nordeste2025 #tvStatsBar .text-gray-500,
+        .layout-nordeste2025 #tvStatsBar .text-gray-600,
+        .layout-nordeste2025 #tvStatsBar .text-gray-800 {
+            color: #8B0000 !important; /* Rótulos e separadores em vermelho escuro */
+            opacity: 0.6;
+        }
+        .layout-nordeste2025 #tvStatsBar .fa-solid {
+            color: #C00202 !important; /* Ícones em vermelho vibrante */
+        }
+        /* Ajuste específico para a barra de posse no Nordeste */
+        .layout-nordeste2025 #tvStatsBar .bg-gray-800 {
+            background-color: #E2E8F0 !important; /* Fundo cinza claro para a barra de posse */
+        }
+        
+        /* Substituição para Nordeste 2025 (Integrada no Card) */
+        #tvSubBannerAbove.theme-center-bg {
+            background: #4A0404 !important;
         }
 
         .drag-handle {
@@ -257,14 +370,18 @@
         .ticker-label {
             color: white;
             font-weight: 900;
-            padding: 0 20px;
+            padding: 0;
             height: 100%;
             display: flex;
             align-items: center;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             z-index: 2;
-            box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 10px 0 20px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+            width: 350px; /* Aumentado para 350px para caber nomes longos sem cortar */
+            flex-shrink: 0;
+            justify-content: center;
         }
 
         .ticker-wrap {
@@ -278,7 +395,7 @@
             display: inline-block;
             white-space: nowrap;
             padding-left: 100%;
-            animation: ticker 200s linear infinite;
+            animation: ticker 100s linear infinite;
         }
 
         @keyframes ticker {
@@ -409,6 +526,95 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
         }
 
+        .status-card {
+            background: linear-gradient(180deg, rgba(17,24,39,0.92), rgba(10,14,23,0.96));
+            border: 1px solid rgba(148,163,184,0.12);
+            border-radius: 18px;
+            padding: 16px 18px;
+            box-shadow: 0 20px 40px -24px rgba(0, 0, 0, 0.85);
+        }
+
+        .status-card-label {
+            display: block;
+            color: #64748b;
+            font-size: 10px;
+            font-weight: 900;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .status-card-value {
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        #tvH2HOverlay > #h2hCard {
+            background: linear-gradient(180deg, var(--theme-bg-color), var(--theme-bg-dark));
+        }
+
+        .h2h-slider-shell {
+            position: relative;
+        }
+
+        .h2h-slides-viewport {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .h2h-slides-track {
+            display: flex;
+            width: 100%;
+            transition: transform 0.45s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .h2h-slide {
+            min-width: 100%;
+            flex: 0 0 100%;
+        }
+
+        .h2h-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(2, 6, 23, 0.75);
+            color: #e2e8f0;
+            z-index: 5;
+            transition: all 0.2s ease;
+        }
+
+        .h2h-nav:hover {
+            background: rgba(2, 6, 23, 0.95);
+            border-color: rgba(56, 189, 248, 0.5);
+            color: #ffffff;
+        }
+
+        .h2h-nav-left { left: -20px; }
+        .h2h-nav-right { right: -20px; }
+
+        .h2h-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: rgba(148, 163, 184, 0.35);
+            transition: all 0.2s ease;
+        }
+
+        .h2h-dot-active {
+            width: 28px;
+            background: var(--theme-color);
+        }
+
+        .h2h-countdown-card {
+            min-height: 150px;
+            justify-content: center;
+        }
+
         .ticker-goal-anim {
             animation: ticker-goal-slide 6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
@@ -418,6 +624,31 @@
             10% { transform: translateY(0); }
             90% { transform: translateY(0); }
             100% { transform: translateY(100%); }
+        }
+
+        #tvBestPlayerCard.show {
+            display: flex !important;
+            animation: bestPlayerShow 0.7s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes bestPlayerShow {
+            0% { transform: translateY(100%); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Cores de notas SofaScore */
+        .rating-gold { background-color: #fbbf24 !important; box-shadow: 0 0 15px rgba(251, 191, 36, 0.4); }
+        .rating-green { background-color: #10b981 !important; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .rating-lightgreen { background-color: #84cc16 !important; }
+        .rating-yellow { background-color: #eab308 !important; }
+        .rating-orange { background-color: #f97316 !important; }
+
+        .layout-nordeste2025 #tvBestPlayerCard {
+            background: #FFFFFF !important;
+            border-top: 1px solid rgba(74, 4, 4, 0.1) !important;
+        }
+        .layout-nordeste2025 #tvBestPlayerCard #tvBestPlayerName {
+            color: #4A0404 !important;
         }
 
         .flash-row-up {
@@ -437,3 +668,96 @@
             0% { background-color: rgba(239, 68, 68, 0.6); }
             100% { background-color: transparent; }
         }
+
+        /* Ajuste inteligente para textos longos no cronômetro do H2H */
+        .layout-copa .theme-center-bg #h2hCountdown.text-long,
+        #h2hCountdown.text-long {
+            font-size: 1.8rem !important;
+            line-height: 0.95 !important;
+            white-space: normal;
+            letter-spacing: normal !important;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        /* --- NOVOS OVERLAYS IMERSIVOS --- */
+        .goal-stripes-bg {
+            background: repeating-linear-gradient(
+                45deg,
+                #4A0404, /* Maroon Nordeste */
+                #4A0404 40px,
+                #C00202 40px,
+                #C00202 80px
+            );
+            background-size: 200% 200%;
+            animation: goalStripes 4s linear infinite;
+            border-top: 4px solid #FEBA0F; /* Gold accent */
+        }
+
+        @keyframes goalStripes {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        #tvGoalImmersive.show {
+            transform: translateY(0);
+        }
+
+        #tvCardNotify.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        /* Classes dinâmicas para Cartões */
+        .card-yellow { border-color: #eab308 !important; }
+        .card-red { border-color: #ef4444 !important; }
+        .card-bg-yellow { background-color: #eab308 !important; }
+        .card-bg-red { background-color: #ef4444 !important; }
+        .card-text-yellow { color: #eab308 !important; }
+        .card-text-red { color: #ef4444 !important; }
+
+        /* Reduz o tamanho dos botões de ações do topo esquerdo (tela de transmissão) */
+        #uiTransmissao .fixed.top-6.left-6 button {
+            padding: 0.35rem 0.55rem !important;
+            border-radius: 0.5rem !important;
+            font-size: 0.75rem !important;
+            gap: 0.35rem !important;
+        }
+
+
+        #uiTransmissao .fixed.top-6.left-6 button i {
+            font-size: 0.95rem !important;
+        }
+
+        /* Animação Suave da Tabela */
+        #tvPanelTabela {
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform-origin: top right;
+            z-index: 100 !important;
+            opacity: 1; /* Garantir opacidade 1 por padrão quando visível */
+            transform: scale(1) translateY(0);
+        }
+        #tvPanelTabela.oculto {
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transform: scale(0.9) translateY(10px) !important;
+        }
+
+        /* Craque do Jogo (Substituição) */
+        #tvMainScoreRow {
+            transition: all 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #tvMainScoreRow.slide-out {
+            transform: translateY(-40px);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #tvBestPlayerCard.show {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+            display: flex !important;
+        }
+
+        /* Cores das Notas (Simplificado para Branco/Cinza) */
+        .rating-gold, .rating-green, .rating-lightgreen, .rating-yellow, .rating-orange { color: #ffffff !important; text-shadow: none !important; }

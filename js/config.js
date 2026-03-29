@@ -19,42 +19,32 @@ const CAMPEONATOS_FIXOS_CODIGO = [
     390,    // Brasileirão Série B
     1281,   // Brasileirão Série C
     10326,  // Brasileirão Série D
-    13076,  // Brasileirão Feminino
     10257,  // Brasileirão Feminino A1 Women
-    73,     // Copa do Brasil
-    17015,  // Copa Verde
+    373,    // Copa do Brasil
     384,    // Copa Libertadores
     480,    // Copa Sul-Americana
-    11539,  // Recopa Sul-Americana
-    7,      // Champions League
-    679,    // Europa League
-    17,     // Premier League
-    8,      // La Liga
-    23,     // Serie A (Itália)
-    35,     // Bundesliga
-    34      // Ligue 1
+    490,    // Recopa Sul-Americana
+    1596,   // Copa do Nordeste
+    33495,  // Copa sulsudeste
+    10158,  // Copa Verde
+    851,    // Amistosos Internacionais
+    19855,   // Campeonato Cearense Serie B
 ];
 
 // Lista de IDs para o Ticker (Giro da Rodada)
 const GIRO_TORNEIOS_IDS = [
-    325,    // Série A
-    390,    // Série B
-    1281,   // Série C
-    10326,  // Série D
-    13076,  // Brasileirão Feminino
+    325,    // Brasileirão Série A
+    390,    // Brasileirão Série B
+    1281,   // Brasileirão Série C
+    10326,  // Brasileirão Série D
     10257,  // Brasileirão Feminino A1 Women
-    73,     // Copa do Brasil
-    17015,  // Copa Verde
+    373,    // Copa do Brasil
     384,    // Copa Libertadores
     480,    // Copa Sul-Americana
-    11539,  // Recopa Sul-Americana
-    7,      // Champions League
-    679,    // Europa League
-    17,     // Premier League
-    8,      // La Liga
-    23,     // Serie A (Itália)
-    35,     // Bundesliga
-    34,     // Ligue 1
-    378,    // Cearense A
-    19855   // Cearense B
+    490,    // Recopa Sul-Americana
+    1596,   // Copa do Nordeste
+    33495,  // Copa sulsudeste
+    10158,  // Copa Verde
+    851,    // Amistosos Internacionais
+    19855,   // Campeonato Cearense Serie B
 ];

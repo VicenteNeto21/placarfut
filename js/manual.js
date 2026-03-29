@@ -59,12 +59,25 @@ function toggleManualTimer() {
 }
 
 function iniciarTransmissaoManual() {
-    if (loopDados) { clearInterval(loopDados); loopDados = null; }
     if (loopCronometro) { clearInterval(loopCronometro); loopCronometro = null; }
     modoAtual = 'manual';
     jogoSelecionadoId = null;
+    salvarSessaoAtiva(); // SALVAR SESSÃO MANUAL
     document.getElementById("painelAdmin").style.display = "none";
     document.getElementById("uiTransmissao").style.display = "block";
+
+    // Escala padrão do placar: 95%
+    escalaPlacar = 0.95;
+    const wrapper = document.getElementById("placarWrapper");
+    if (wrapper) {
+        const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
+        const transX = isCentered ? "translateX(-50%) " : "";
+        wrapper.style.transformOrigin = "bottom center";
+        wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
+    }
+    const txtTam = document.getElementById("textoTamanho");
+    if (txtTam) txtTam.innerText = "95%";
+
     document.getElementById("tvScorersBar").classList.add("hidden");
     document.getElementById("tvStatsBar").classList.add("hidden");
     document.getElementById("tvRedCardCasa").classList.add("hidden");
@@ -83,18 +96,56 @@ function iniciarTransmissaoManual() {
 function atualizarPlacarManualNoOBS() {
     const tema = document.getElementById("manTema").value;
     const placar = document.getElementById("placarCard");
+    const h2hCard = document.getElementById("h2hCard");
+    const wrapper = document.getElementById("placarWrapper");
+
     if (placar) {
-        placar.className = "placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10";
+        placar.className = "placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10 transition-transform duration-500";
+        if (h2hCard) h2hCard.className = "h2h-panel theme-bg-dark border theme-border p-8 rounded-[2rem] shadow-2xl flex flex-col items-center w-[1100px] relative overflow-hidden transition-all duration-300";
+        if (wrapper) wrapper.classList.remove("layout-nordeste2025");
+        
         if (tema) {
             placar.classList.add(tema);
-            placar.classList.remove("rounded-xl");
-            placar.classList.add("layout-copa");
+            
+            if (tema === 'theme-nordeste2025') {
+                placar.classList.add("layout-nordeste2025");
+                if (wrapper) wrapper.classList.add("layout-nordeste2025");
+                if (h2hCard) h2hCard.classList.add("layout-nordeste2025");
+                // Escala 95% solicitada pelo usuário
+                escalaPlacar = 0.95;
+                if (wrapper) {
+                    const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
+                    const transX = isCentered ? "translateX(-50%) " : "";
+                    wrapper.style.transformOrigin = "bottom center";
+                    wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
+                }
+                const txtTam = document.getElementById("textoTamanho");
+                if (txtTam) txtTam.innerText = "95%";
+            } else {
+                placar.classList.remove("rounded-xl");
+                placar.classList.add("layout-copa");
+                if (h2hCard) {
+                    h2hCard.classList.remove("rounded-[2rem]");
+                    h2hCard.classList.add("layout-copa");
+                    h2hCard.classList.add(tema);
+                }
+            }
+        }
+    }
+
+    const elLogoComp = document.getElementById("tvLogoComp");
+    if (elLogoComp) {
+        if (tema === 'theme-nordeste2025') {
+            elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/1596/image`;
+            elLogoComp.classList.remove("hidden");
+        } else {
+            elLogoComp.classList.add("hidden");
         }
     }
 
     document.getElementById("tvCampeonato").innerHTML = document.getElementById("manCamp").value.toUpperCase() || "AMISTOSO";
-    document.getElementById("tvNomeCasa").innerHTML = document.getElementById("manCasaNome").value.toUpperCase().substring(0, 4) || "CASA";
-    document.getElementById("tvNomeFora").innerHTML = document.getElementById("manForaNome").value.toUpperCase().substring(0, 4) || "FORA";
+    document.getElementById("tvNomeCasa").innerHTML = document.getElementById("manCasaNome").value.toUpperCase() || "CASA";
+    document.getElementById("tvNomeFora").innerHTML = document.getElementById("manForaNome").value.toUpperCase() || "FORA";
     let logoCasa = document.getElementById("manCasaLogo").value;
     let logoFora = document.getElementById("manForaLogo").value;
     const placeholderSvg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 150 150'%3E%3Crect fill='%23222' width='150' height='150' rx='75'/%3E%3Cpath fill='none' stroke='%23444' stroke-width='2' d='M75 15 a60 60 0 1 0 0 120 a60 60 0 1 0 0 -120 M75 35 l10 20 l20 0 l-15 15 l10 25 l-25 -15 l-25 15 l10 -25 l-15 -15 l20 0 z'/%3E%3C/svg%3E";
@@ -103,8 +154,8 @@ function atualizarPlacarManualNoOBS() {
 
     const novoGolsC = manValGolsCasa;
     const novoGolsF = manValGolsFora;
-    if (novoGolsC > parseInt(document.getElementById("tvGolsCasa").innerHTML || -1)) piscarGol("tvGolsCasa");
-    if (novoGolsF > parseInt(document.getElementById("tvGolsFora").innerHTML || -1)) piscarGol("tvGolsFora");
+    if (novoGolsC > parseInt(document.getElementById("tvGolsCasa").innerHTML || -1)) atualizarPlacarComEfeito("tvGolsCasa", null, null, false);
+    if (novoGolsF > parseInt(document.getElementById("tvGolsFora").innerHTML || -1)) atualizarPlacarComEfeito("tvGolsFora", null, null, false);
     document.getElementById("tvGolsCasa").innerHTML = novoGolsC;
     document.getElementById("tvGolsFora").innerHTML = novoGolsF;
 
@@ -155,11 +206,13 @@ function atualizarPlacarManualNoOBS() {
 
     const agrC = document.getElementById("manAgrCasa")?.value;
     const agrF = document.getElementById("manAgrFora")?.value;
-    const elAgr = document.getElementById("tvAgregado");
     if (elAgr) {
         if (agrC && agrF) { elAgr.innerHTML = `AGR. ${agrC} - ${agrF}`; elAgr.classList.remove("hidden"); } 
         else { elAgr.classList.add("hidden"); }
     }
+    
+    // Salvar estado atual dos inputs se estiver no modo manual
+    if (modoAtual === 'manual') salvarSessaoAtiva();
 }
 
 function dispararSubstituicaoManual() {

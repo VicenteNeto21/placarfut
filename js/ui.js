@@ -3,9 +3,14 @@
 
 const NOMES_TORNEIOS_FIXOS = {
     325: "BRASILEIRÃO SÉRIE A", 390: "BRASILEIRÃO SÉRIE B", 1281: "BRASILEIRÃO SÉRIE C", 10326: "BRASILEIRÃO SÉRIE D",
-    13076: "BRASILEIRÃO FEMININO", 10257: "BRASILEIRÃO FEMININO A1", 73: "COPA DO BRASIL", 11620: "COPA DO NORDESTE", 2503: "CAMPEONATO CEARENSE", 384: "COPA LIBERTADORES", 480: "COPA SUL-AMERICANA",
-    11539: "RECOPA SUL-AMERICANA", 17015: "COPA VERDE", 7: "CHAMPIONS LEAGUE", 679: "EUROPA LEAGUE",
-    17: "PREMIER LEAGUE", 8: "LA LIGA", 23: "SERIE A (ITÁLIA)", 35: "BUNDESLIGA", 34: "LIGUE 1"
+    10257: "BRASILEIRÃO FEMININO A1", 373: "COPA DO BRASIL", 73: "COPA DO BRASIL",
+    384: "COPA LIBERTADORES", 480: "COPA SUL-AMERICANA", 490: "RECOPA SUL-AMERICANA",
+    1596: "COPA DO NORDESTE", 11620: "COPA DO NORDESTE", 
+    33495: "COPA SUL-SUDESTE", 10158: "COPA VERDE", 17015: "COPA VERDE",
+    851: "AMISTOSOS INTERNACIONAIS", 19280: "AMISTOSOS",
+    19855: "CAMPEONATO CEARENSE SÉRIE B", 2503: "CAMPEONATO CEARENSE",
+    7: "LIGA DOS CAMPEÕES", 679: "LIGA EUROPA",
+    17: "LIGA INGLESA", 8: "CAMPEONATO ESPANHOL", 23: "SÉRIE A (ITÁLIA)", 35: "CAMPEONATO ALEMÃO", 34: "CAMPEONATO FRANCÊS"
 };
 
 // Alterna as abas (Auto / Manual)
@@ -47,6 +52,29 @@ function mudarData(direcao) {
     ultimoFetchCache = 0;
     atualizarLabelData();
     buscarJogosSofaScore();
+}
+
+let mostrarTodasLigas = false;
+
+function toggleFiltroLigas(todas) {
+    mostrarTodasLigas = todas;
+    
+    const btnMonitorado = document.getElementById("btnFilterMonitored");
+    const btnAll = document.getElementById("btnFilterAll");
+    
+    if (todas) {
+        btnAll.classList.add("bg-emerald-600", "text-white", "shadow-lg", "shadow-emerald-500/20");
+        btnAll.classList.remove("text-gray-400", "hover:text-white");
+        btnMonitorado.classList.remove("bg-emerald-600", "text-white", "shadow-lg", "shadow-emerald-500/20");
+        btnMonitorado.classList.add("text-gray-400", "hover:text-white");
+    } else {
+        btnMonitorado.classList.add("bg-emerald-600", "text-white", "shadow-lg", "shadow-emerald-500/20");
+        btnMonitorado.classList.remove("text-gray-400", "hover:text-white");
+        btnAll.classList.remove("bg-emerald-600", "text-white", "shadow-lg", "shadow-emerald-500/20");
+        btnAll.classList.add("text-gray-400", "hover:text-white");
+    }
+    
+    if (cacheJogos) exibirJogosNaLista(cacheJogos);
 }
 
 function irParaHoje() {
@@ -187,7 +215,7 @@ function popularSelectNovosTorneios() {
         if (tornId && nome) {
             // Se não for um fixo e não estiver nos favoritos, permite adicionar
             if (!CAMPEONATOS_FIXOS_CODIGO.includes(tornId) && !meusTorneios.some(t => t.id === tornId)) {
-                mapUnicos.set(tornId, nome);
+                mapUnicos.set(tornId, nomeCampeonatoExibicao(tornId, nome));
             }
         }
     });
@@ -248,9 +276,10 @@ async function adicionarTorneioPorIdManual() {
 
     try {
         const data = await fetchSofaScore(`unique-tournament/${id}`);
-        const nome = data.uniqueTournament?.name || `Torneio ID ${id}`;
-        
-        meusTorneios.push({ id, nome: nome.toUpperCase() });
+        const nomeApi = data.uniqueTournament?.name || `Torneio ID ${id}`;
+        const nome = nomeCampeonatoExibicao(id, nomeApi, nomeApi).toUpperCase();
+
+        meusTorneios.push({ id, nome });
         salvarMeusTorneios();
         renderizarListaTorneiosSalvos();
         input.value = "";
@@ -331,13 +360,81 @@ window.addEventListener('click', (e) => {
     if (e.target === modal) fecharModalTorneios();
 });
 
+function formatarHoraStatus(timestamp) {
+    if (!timestamp) return '--:--:--';
+    return new Date(timestamp).toLocaleTimeString('pt-BR', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        timeZone: APP_TIMEZONE
+    });
+}
+
+function renderizarStatusOperacional() {
+    const healthEl = document.getElementById('systemHealth');
+    const lastEl = document.getElementById('lastUpdateDisplay');
+    const sourceEl = document.getElementById('dataSourceDisplay');
+    const errorPanel = document.getElementById('systemErrorPanel');
+    const errorMsg = document.getElementById('systemErrorMessage');
+
+    if (healthEl) {
+        healthEl.textContent = ultimoStatusSistema.mensagem || 'Aguardando';
+        healthEl.className = 'status-card-value';
+        if (ultimoStatusSistema.tipo === 'ok') healthEl.classList.add('text-emerald-300');
+        else if (ultimoStatusSistema.tipo === 'warn') healthEl.classList.add('text-amber-300');
+        else if (ultimoStatusSistema.tipo === 'error') healthEl.classList.add('text-red-300');
+        else healthEl.classList.add('text-gray-200');
+    }
+
+    if (lastEl) lastEl.textContent = formatarHoraStatus(ultimoStatusSistema.atualizadoEm);
+    if (sourceEl) sourceEl.textContent = ultimoStatusSistema.origem || 'Sem carga';
+
+    if (errorPanel && errorMsg) {
+        if (ultimoStatusSistema.tipo === 'error') {
+            errorPanel.classList.remove('hidden');
+            errorMsg.textContent = ultimoStatusSistema.mensagem || 'Falha desconhecida.';
+        } else {
+            errorPanel.classList.add('hidden');
+        }
+    }
+}
+
+function atualizarStatusOperacional(tipo, mensagem, origem = 'live') {
+    ultimoStatusSistema = {
+        tipo,
+        mensagem,
+        atualizadoEm: Date.now(),
+        origem
+    };
+    renderizarStatusOperacional();
+}
+
+function salvarFallbackEventos(dataSelecionada, eventos) {
+    try {
+        localStorage.setItem(`futlive_fallback_${dataSelecionada}`, JSON.stringify({
+            timestamp: Date.now(),
+            eventos
+        }));
+    } catch (e) {}
+}
+
+function carregarFallbackEventos(dataSelecionada) {
+    try {
+        const raw = localStorage.getItem(`futlive_fallback_${dataSelecionada}`);
+        return raw ? JSON.parse(raw) : null;
+    } catch (e) {
+        return null;
+    }
+}
+
 // ========== BUSCA DE JOGOS E PROCESSO DE UI ==========
 async function buscarJogosSofaScore(forcar = true) {
     const painelStatus = document.getElementById("statusPainel");
     const listaDiv = document.getElementById("listaDeJogos");
 
-    if (cacheJogos && (Date.now() - ultimoFetchCache) < CACHE_TTL) {
+    if (!forcar && cacheJogos && (Date.now() - ultimoFetchCache) < CACHE_TTL) {
         exibirJogosNaLista(cacheJogos);
+        atualizarStatusOperacional('warn', 'Exibindo cache em memÃ³ria.', 'cache local');
         painelStatus.innerHTML = `<i class="fa-solid fa-box text-blue-400"></i> Cache: ${cacheJogos.length} jogos (atualizado há ${Math.floor((Date.now() - ultimoFetchCache) / 1000)}s)`;
         return;
     }
@@ -347,8 +444,26 @@ async function buscarJogosSofaScore(forcar = true) {
 
     try {
         const { iso: dataSelecionada } = getDataComOffset(offsetDias);
+        
+        // 1. Busca Global (Top Eventos)
         const data = await fetchSofaScore(`sport/football/scheduled-events/${dataSelecionada}`);
-        const todosEventos = data.events || [];
+        let todosEventos = data.events || [];
+
+        // 2. Busca Específica Brasil (Garante divisões inferiores e regionais)
+        const tornIdsBrasil = new Set();
+        try {
+            // Caminho correto para eventos por categoria (Brasil = 13)
+            const brazilData = await fetchSofaScore(`category/13/scheduled-events/${dataSelecionada}`);
+            if (brazilData.events) {
+                brazilData.events.forEach(brEv => {
+                    const { tornId } = getInfoTorneio(brEv);
+                    if (tornId) tornIdsBrasil.add(tornId);
+                    if (!todosEventos.some(e => e.id === brEv.id)) {
+                        todosEventos.push(brEv);
+                    }
+                });
+            }
+        } catch (eb) { console.error('Erro ao buscar feed extra Brasil:', eb); }
 
         // Mesclar Live Global se for Hoje (Resolve bug de fuso horário da madrugada)
         if (offsetDias === 0) {
@@ -378,8 +493,13 @@ async function buscarJogosSofaScore(forcar = true) {
             const { tornId } = getInfoTorneio(j);
             const ehFavoritoMenu = meusTorneios.some(t => t.id === tornId);
             const ehFixoNoCodigo = CAMPEONATOS_FIXOS_CODIGO.includes(tornId) && !torneiosOcultos.includes(tornId);
+            const ehBrasilFeed = tornIdsBrasil.has(tornId);
             
-            return ehFavoritoMenu || ehFixoNoCodigo;
+            // Inclui tudo que aparecer no feed Brasil (category/13) para cobrir todas as
+            // competições em que times brasileiros participam no dia selecionado.
+            // Respeita ocultação de torneios.
+            if (torneiosOcultos.includes(tornId)) return false;
+            return ehFavoritoMenu || ehFixoNoCodigo || ehBrasilFeed;
         });
 
         // Ordenar
@@ -391,8 +511,10 @@ async function buscarJogosSofaScore(forcar = true) {
             return (a.startTimestamp || 0) - (b.startTimestamp || 0);
         });
         ultimoFetchCache = Date.now();
+        salvarFallbackEventos(dataSelecionada, cacheJogos);
 
         if (cacheJogos.length > 0) {
+            atualizarStatusOperacional('ok', 'API online e dados sincronizados.', 'sofascore live');
             exibirJogosNaLista(cacheJogos);
             const aoVivo = cacheJogos.filter(j => isJogoAoVivo(j)).length;
             const encerrados = cacheJogos.filter(j => j.status?.code === 100 || j.status?.type === 'finished').length;
@@ -400,15 +522,27 @@ async function buscarJogosSofaScore(forcar = true) {
         } else {
             painelStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Nenhum jogo programado para hoje.`;
             listaDiv.innerHTML = '<div class="text-center text-gray-400 py-12"><i class="fa-solid fa-futbol fa-2x mb-3"></i><p>Nenhuma partida programada para hoje</p></div>';
+            atualizarStatusOperacional('warn', 'Consulta concluÃ­da sem jogos para a data.', 'sofascore live');
         }
     } catch (error) {
         console.error(error);
+        const { iso: dataSelecionada } = getDataComOffset(offsetDias);
+        const fallback = carregarFallbackEventos(dataSelecionada);
+        if (fallback?.eventos?.length) {
+            cacheJogos = fallback.eventos;
+            ultimoFetchCache = fallback.timestamp || Date.now();
+            exibirJogosNaLista(cacheJogos);
+            painelStatus.innerHTML = `<i class="fa-solid fa-database text-amber-300"></i> Falha na API. Exibindo fallback salvo de ${formatarHoraStatus(fallback.timestamp)}.`;
+            atualizarStatusOperacional('warn', `API indisponÃ­vel. Fallback carregado (${error.message}).`, 'fallback salvo');
+            return;
+        }
         painelStatus.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400"></i> Erro: ${error.message}`;
+        atualizarStatusOperacional('error', `Falha ao consultar a API: ${error.message}`, 'sem fallback');
         listaDiv.innerHTML = `
             <div class="bg-red-900/30 border border-red-800 p-6 rounded-xl text-center">
                 <p class="text-red-400 font-bold mb-2"><i class="fa-solid fa-ban"></i> Falha na conexão</p>
                 <p class="text-sm text-gray-300">Verifique se o backend está rodando corretamente.</p>
-                <button onclick="buscarJogosSofaScore()" class="mt-4 bg-red-600 hover:bg-red-500 px-4 py-2 rounded text-sm font-bold"><i class="fa-solid fa-rotate-right"></i> Tentar Novamente</button>
+                <button onclick="buscarJogosSofaScore(true)" class="mt-4 bg-red-600 hover:bg-red-500 px-4 py-2 rounded text-sm font-bold"><i class="fa-solid fa-rotate-right"></i> Tentar Novamente</button>
             </div>
         `;
     }
@@ -421,10 +555,16 @@ function exibirJogosNaLista(jogos) {
     const grupos = {};
     jogos.forEach(jogo => {
         const { tornId, nome: tornNome } = getInfoTorneio(jogo);
-        const key = `${tornId}_${tornNome}`;
+        
+        // Filtro de Ligas Monitoradas
+        const isFixo = CAMPEONATOS_FIXOS_CODIGO.includes(tornId);
+        if (!mostrarTodasLigas && !isFixo) return;
+
+        const key = tornId ? String(tornId) : tornNome;
+        const nomeExib = nomeCampeonatoExibicao(tornId, tornNome);
         if (!grupos[key]) {
             grupos[key] = {
-                nome: tornNome,
+                nome: nomeExib,
                 id: tornId,
                 jogos: []
             };
@@ -497,7 +637,7 @@ function exibirJogosNaLista(jogos) {
                             ${horario ? `<span class="text-gray-500 text-[10px]"><i class="fa-regular fa-clock"></i> ${horario}</span>` : ''}
                         </div>
                         <div class="text-sm font-bold text-white truncate">
-                            ${jogo.homeTeam.shortName || jogo.homeTeam.name} vs ${jogo.awayTeam.shortName || jogo.awayTeam.name}
+                            ${traduzirNomeEquipe(jogo.homeTeam.name || jogo.homeTeam.shortName)} vs ${traduzirNomeEquipe(jogo.awayTeam.name || jogo.awayTeam.shortName)}
                         </div>
                     </div>
                     <img src="${logoF}" onerror="this.src='https://www.sofascore.com/static/images/placeholders/team.svg'" referrerpolicy="no-referrer" class="w-9 h-9 object-contain bg-white/10 rounded-full p-1 shrink-0">

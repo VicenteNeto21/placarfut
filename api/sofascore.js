@@ -3,6 +3,8 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // Adiciona cache suave de 60s para evitar excesso de requisições e garantir performance
+    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
 
     // Responde pré‑flight (OPTIONS)
     if (req.method === 'OPTIONS') {
@@ -16,7 +18,6 @@ module.exports = async function handler(req, res) {
     }
 
     // Extrai o endpoint da SofaScore a partir da query string
-    // Exemplo: /api/sofascore?path=sport/football/events/live
     const { path } = req.query;
     if (!path) {
         return res.status(400).json({ error: 'Parâmetro "path" é obrigatório' });
@@ -38,20 +39,16 @@ module.exports = async function handler(req, res) {
 
     try {
         let lastError = null;
-
         for (const baseUrl of baseUrls) {
             const targetUrl = `${baseUrl}/${path}`;
-
             try {
                 const response = await fetch(targetUrl, {
                     headers: requestHeaders
                 });
-
                 if (!response.ok) {
                     lastError = new Error(`HTTP ${response.status} em ${baseUrl}`);
                     continue;
                 }
-
                 const data = await response.json();
                 res.status(200).json(data);
                 return;
@@ -59,7 +56,6 @@ module.exports = async function handler(req, res) {
                 lastError = error;
             }
         }
-
         throw lastError || new Error('Nenhum endpoint da SofaScore respondeu com sucesso');
     } catch (error) {
         console.error('Erro no proxy:', error);
