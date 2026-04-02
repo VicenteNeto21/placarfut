@@ -1,7 +1,7 @@
 // ========== js/config.js ==========
 // Configurações Globais da PlacarFut
 
-// Endpoint do backend na Vercel (Proxy para evitar CORS)
+// Endpoint do backend local ou produção (Proxy para evitar CORS)
 const BACKEND_URL = '/api/sofascore';
 
 // Tempo de cache (30 segundos)
@@ -28,7 +28,10 @@ const CAMPEONATOS_FIXOS_CODIGO = [
     33495,  // Copa sulsudeste
     10158,  // Copa Verde
     851,    // Amistosos Internacionais
-    19855,   // Campeonato Cearense Serie B
+    19855,  // Campeonato Cearense Serie B
+    16,     // FIFA World Cup
+    11,     // World Cup Qual. UEFA
+    10618   // World Cup Qual. Inter-Confed
 ];
 
 // Lista de IDs para o Ticker (Giro da Rodada)
@@ -46,5 +49,8 @@ const GIRO_TORNEIOS_IDS = [
     33495,  // Copa sulsudeste
     10158,  // Copa Verde
     851,    // Amistosos Internacionais
-    19855,   // Campeonato Cearense Serie B
+    19855,  // Campeonato Cearense Serie B
+    16,     // FIFA World Cup
+    11,     // World Cup Qual. UEFA
+    10618   // World Cup Qual. Inter-Confed
 ];

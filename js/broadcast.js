@@ -1,4 +1,3 @@
-// ========== js/broadcast.js ==========
 // Lógica de Tela Cheia e Transmissão para OBS (SofaScore Auto)
 
 function iniciarTransmissaoSofaScore(id) {
@@ -10,16 +9,7 @@ function iniciarTransmissaoSofaScore(id) {
     ultimoPlacar = { casa: -1, fora: -1 };
 
     // Escala padrão do placar: 95%
-    escalaPlacar = 0.95;
-    const wrapper = document.getElementById("placarWrapper");
-    if (wrapper) {
-        const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
-        const transX = isCentered ? "translateX(-50%) " : "";
-        wrapper.style.transformOrigin = "bottom center";
-        wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
-    }
-    const txtTam = document.getElementById("textoTamanho");
-    if (txtTam) txtTam.innerText = "95%";
+    definirEscalaPlacar(0.95);
     
     // Limpa a tela antes de carregar
     document.getElementById("tvGolsCasa").innerHTML = "-";
@@ -46,8 +36,6 @@ function iniciarTransmissaoSofaScore(id) {
     startTickerObserver();
 }
 
-let mostrarEstatisticas = false;
-let mostrarTabela = false;
 let currentTournamentId = null;
 let currentSeasonId = null;
 let currentTournamentLabel = "";
@@ -198,10 +186,11 @@ function aplicarTemaPlacar(tornId) {
     // Reseta o tema atual mantendo as classes fixas
     placar.className = "placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10 transition-transform duration-500";
     if (h2hCard) h2hCard.className = "h2h-panel theme-bg-dark border theme-border p-8 rounded-[2rem] shadow-2xl flex flex-col items-center w-[1100px] relative overflow-hidden transition-all duration-300";
-    if (wrapper) wrapper.classList.remove("layout-nordeste2025", "layout-copa");
+    if (wrapper) wrapper.classList.remove("layout-nordeste2025", "layout-copa", "layout-seried");
     
     let isCopa = false;
     let isNordeste2025 = false;
+    let isSerieD = false;
     let temaClass = "";
 
     if (tornId === 384) { temaClass = "theme-libertadores"; isCopa = true; }
@@ -210,7 +199,9 @@ function aplicarTemaPlacar(tornId) {
     else if (tornId === 73) { temaClass = "theme-brasil"; isCopa = true; }
     else if (tornId === 17015) { temaClass = "theme-verde"; isCopa = true; }
     else if (tornId === 13076 || tornId === 10257) { temaClass = "theme-feminino"; isCopa = true; }
+    else if (tornId === 16 || tornId === 482 || tornId === 704 || tornId === 712 || tornId === 1406 || tornId === 1045 || tornId === 10618 || tornId === 11) { temaClass = "theme-fifa2026"; isCopa = true; }
 
+    else if (tornId === 10326) { temaClass = "theme-serieD"; isSerieD = true; } // Adicionado tema para Serie D
     if (temaClass) {
         placar.classList.add(temaClass);
         if (h2hCard) h2hCard.classList.add(temaClass);
@@ -220,16 +211,17 @@ function aplicarTemaPlacar(tornId) {
         placar.classList.add("layout-nordeste2025");
         if (wrapper) wrapper.classList.add("layout-nordeste2025");
         if (h2hCard) h2hCard.classList.add("layout-nordeste2025");
-        // Escala 95% solicitada pelo usuário
-        escalaPlacar = 0.95;
-        if (wrapper) {
-            const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
-            const transX = isCentered ? "translateX(-50%) " : "";
-            wrapper.style.transformOrigin = "bottom center";
-            wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
-        }
+        definirEscalaPlacar(0.95);
         const txtTam = document.getElementById("textoTamanho");
         if (txtTam) txtTam.innerText = "95%";
+    } else if (isSerieD) {
+        placar.classList.remove("rounded-xl");
+        placar.classList.add("layout-seried");
+        if (wrapper) wrapper.classList.add("layout-seried");
+        if (h2hCard) {
+            h2hCard.classList.remove("rounded-[2rem]");
+            h2hCard.classList.add("layout-seried");
+        }
     } else if (isCopa) {
         placar.classList.remove("rounded-xl");
         placar.classList.add("layout-copa");
@@ -296,8 +288,12 @@ async function atualizarDadosSofaScore() {
         // Logo da Competição
         const elLogoComp = document.getElementById("tvLogoComp");
         if (elLogoComp) {
-            if (currentTournamentId === 1596 || currentTournamentId === 11620) {
-                elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/${currentTournamentId}/image&_t=${Date.now()}`;
+            const placar = document.getElementById("placarCard");
+            if (placar && placar.classList.contains('theme-fifa2026')) {
+                elLogoComp.src = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:210&quality=75";
+                elLogoComp.classList.remove("hidden");
+            } else if (currentTournamentId === 1596 || currentTournamentId === 11620) {
+                elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/${currentTournamentId}/image`;
                 elLogoComp.classList.remove("hidden");
             } else {
                 elLogoComp.classList.add("hidden");
@@ -321,8 +317,8 @@ async function atualizarDadosSofaScore() {
         
         if (nomeForaFull.length > 10) elNomeFora.style.fontSize = "1.2rem";
         else elNomeFora.style.fontSize = "";
-        document.getElementById("imgLogoCasa").src = `${BACKEND_URL}?path=team/${jogo.homeTeam.id}/image&_t=${Date.now()}`;
-        document.getElementById("imgLogoFora").src = `${BACKEND_URL}?path=team/${jogo.awayTeam.id}/image&_t=${Date.now()}`;
+        document.getElementById("imgLogoCasa").src = `${BACKEND_URL}?path=team/${jogo.homeTeam.id}/image`;
+        document.getElementById("imgLogoFora").src = `${BACKEND_URL}?path=team/${jogo.awayTeam.id}/image`;
 
         teamColorCasa = jogo.homeTeam.teamColors?.primary || '#3b82f6';
         teamColorFora = jogo.awayTeam.teamColors?.primary || '#ef4444';
@@ -338,22 +334,26 @@ async function atualizarDadosSofaScore() {
         const type = jogo.status?.type;
         const isLive = isJogoAoVivo(jogo);
         
+        const elBadgeAoVivo = document.getElementById("tvBadgeAoVivo");
+        const elBolinhaAoVivo = document.getElementById("tvBolinhaAoVivo");
+        const elTextoBadge = document.getElementById("tvTextoBadge");
+        const elPeriodo = document.getElementById("tvPeriodo");
+        
         if (isLive) {
-            document.getElementById("tvBadgeAoVivo").classList.add("text-red-500");
-            document.getElementById("tvBadgeAoVivo").classList.remove("text-gray-500");
-            document.getElementById("tvBolinhaAoVivo").classList.add("bg-red-500");
-            document.getElementById("tvBolinhaAoVivo").classList.remove("bg-gray-500");
-            document.getElementById("tvBadgeAoVivo").classList.add("animate-pulse");
-            document.getElementById("tvTextoBadge").innerHTML = "AO VIVO";
-            document.getElementById("tvPeriodo").classList.add("theme-text");
-            document.getElementById("tvPeriodo").classList.remove("text-gray-400", "text-sky-400");
+            elBadgeAoVivo.classList.add("text-red-500");
+            elBadgeAoVivo.classList.remove("text-gray-500", "animate-pulse");
+            elBadgeAoVivo.classList.add("animate-pulse"); // ensure it's added back fresh
+            elBolinhaAoVivo.classList.add("bg-red-500");
+            elBolinhaAoVivo.classList.remove("bg-gray-500");
+            elTextoBadge.innerHTML = "AO VIVO";
+            elPeriodo.classList.add("theme-text");
+            elPeriodo.classList.remove("text-gray-400", "text-sky-400");
             cronometroRodando = true;
         } else {
-            document.getElementById("tvBadgeAoVivo").classList.remove("text-red-500");
-            document.getElementById("tvBadgeAoVivo").classList.add("text-gray-500");
-            document.getElementById("tvBolinhaAoVivo").classList.remove("bg-red-500");
-            document.getElementById("tvBolinhaAoVivo").classList.add("bg-gray-500");
-            document.getElementById("tvBadgeAoVivo").classList.remove("animate-pulse");
+            elBadgeAoVivo.classList.remove("text-red-500", "animate-pulse");
+            elBadgeAoVivo.classList.add("text-gray-500");
+            elBolinhaAoVivo.classList.remove("bg-red-500");
+            elBolinhaAoVivo.classList.add("bg-gray-500");
             
             let txt = "ENCERRADO";
             if (statusCode === 7) txt = "INTERVALO";
@@ -364,10 +364,10 @@ async function atualizarDadosSofaScore() {
             else if (statusCode === 120) txt = "PÊNALTIS";
             else if (statusCode === 100) txt = "ENCERRADO";
             
-            document.getElementById("tvTextoBadge").innerHTML = txt;
-            document.getElementById("tvPeriodo").innerHTML = txt;
-            document.getElementById("tvPeriodo").classList.remove("theme-text", "text-sky-400");
-            document.getElementById("tvPeriodo").classList.add("text-gray-400");
+            elTextoBadge.innerHTML = txt;
+            elPeriodo.innerHTML = txt;
+            elPeriodo.classList.remove("theme-text", "text-sky-400");
+            elPeriodo.classList.add("text-gray-400");
             cronometroRodando = false;
         }
         
@@ -452,11 +452,6 @@ async function atualizarDadosSofaScore() {
         
         if (mostrarEstatisticas) {
             buscarEstatisticas(jogoSelecionadoId);
-        }
-        
-        // Carrega tabela automaticamente se o painel estiver aberto
-        if (mostrarTabela) {
-             buscarTabelaSofaScore(jogo.tournament.id, jogo.season.id);
         }
         
         // Se a tabela estiver na tela, atualiza os pontos em tempo real silenciosamente
@@ -710,8 +705,8 @@ async function buscarEstatisticas(eventId) {
         }
 
         // Tabela Automática
-        if (mostrarTabela && jogo.tournament && jogo.season) {
-            buscarTabelaSofaScore(jogo.tournament.id, jogo.season.id);
+        if (mostrarTabela && currentTournamentId && currentSeasonId) {
+            carregarTabela(true);
         }
     } catch (e) {
         // Se for 404, significa que o jogo não tem estatísticas (comum em ligas menores ou jogos futuros)
@@ -833,45 +828,7 @@ function removerJogadorDestaque() {
         }
     }, 700);
 }
-async function buscarTabelaSofaScore(tournId, seasonId) {
-    const tableBody = document.getElementById("tabTabelaBody");
-    if (!tableBody) return;
 
-    try {
-        const data = await fetchSofaScore(`tournament/${tournId}/season/${seasonId}/standings/total`);
-        if (!data.standings || data.standings.length === 0) return;
-
-        const rows = data.standings[0].rows;
-        let html = '';
-
-        // Pegar apenas os 10 primeiros ou os times em volta do jogo atual
-        // Para simplificar agora, pegaremos os 10 primeiros
-        rows.slice(0, 10).forEach(row => {
-            const isHome = row.team.id === (jogoAtualGlobal?.homeTeam?.id);
-            const isAway = row.team.id === (jogoAtualGlobal?.awayTeam?.id);
-            const activeClass = (isHome || isAway) ? "bg-white/10" : "";
-            
-            html += `
-                <tr class="border-b border-white/5 ${activeClass}">
-                    <td class="py-2 pl-2 text-left font-black text-gray-400">${row.position}</td>
-                    <td class="py-2">
-                        <div class="flex items-center gap-2">
-                            <img src="${BACKEND_URL}?path=team/${row.team.id}/image" class="w-4 h-4 object-contain">
-                            <span class="truncate max-w-[100px] uppercase font-bold text-[10px]">${(row.team.nameCode || row.team.shortName || row.team.name).toUpperCase()}</span>
-                        </div>
-                    </td>
-                    <td class="py-2 text-center font-black text-white">${row.points}</td>
-                    <td class="py-2 text-center text-gray-400">${row.matches}</td>
-                    <td class="py-2 text-center text-gray-400">${row.pointsDiff}</td>
-                </tr>
-            `;
-        });
-
-        tableBody.innerHTML = html;
-    } catch (e) {
-        console.error("Erro ao buscar tabela:", e);
-    }
-}
 
 
 async function atualizarRodapeSofaScore() {
@@ -1034,7 +991,27 @@ async function atualizarRodapeSofaScore() {
             tickerHTML = "<div class='ticker-item'><i class='fa-solid fa-futbol mr-1'></i> Nenhum jogo dos principais campeonatos brasileiros hoje.</div>";
         }
         
-        document.getElementById("tvTicker").innerHTML = tickerHTML + tickerHTML;
+        const novoHTML = tickerHTML + tickerHTML;
+        const container = document.getElementById("tvTicker");
+        if (container) {
+            const tempDiv = document.createElement("div");
+            tempDiv.innerHTML = novoHTML;
+            if (container.children.length !== tempDiv.children.length) {
+                container.innerHTML = novoHTML;
+            } else {
+                for (let i = 0; i < container.children.length; i++) {
+                    if (container.children[i].innerHTML !== tempDiv.children[i].innerHTML) {
+                        container.children[i].innerHTML = tempDiv.children[i].innerHTML;
+                        // Copy data-attributes that might have changed
+                        ['tournament', 'logo'].forEach(attr => {
+                            if (tempDiv.children[i].dataset[attr] !== container.children[i].dataset[attr]) {
+                                container.children[i].dataset[attr] = tempDiv.children[i].dataset[attr];
+                            }
+                        });
+                    }
+                }
+            }
+        }
     } catch (e) { 
         console.error("Erro no ticker:", e); 
     }
@@ -1162,57 +1139,10 @@ function mudarSlideH2H(delta) {
 
 function iniciarSlidesH2H() {
     if (h2hSlideInterval) clearInterval(h2hSlideInterval);
-    h2hSlideInterval = setInterval(() => mudarSlideH2H(1), 6000);
+    h2hSlideInterval = setInterval(() => mudarSlideH2H(1), 8000);
 }
 
-const H2H_TRANSLATIONS = {
-    // Status
-    'Expected': 'Previsto',
-    'Postponed': 'Adiado',
-    'Canceled': 'Cancelado',
-    'Finished': 'Encerrado',
-    'Ended': 'Encerrado',
-    'In progress': 'Em andamento',
-    'Not started': 'Não iniciado',
-    'Halftime': 'Intervalo',
-    'Awaiting updates': 'Aguardando atualizações',
-    'LIVE': 'AO VIVO',
-    'ROLANDO': 'AO VIVO',
-    // Rodadas / Fases
-    'Round': 'Rodada',
-    'Quarter-finals': 'Quartas de Final',
-    'Semi-finals': 'Semifinais',
-    'Final': 'Final',
-    'Group': 'Grupo',
-    'Group A': 'Grupo A',
-    'Group B': 'Grupo B',
-    'Group C': 'Grupo C',
-    'Group D': 'Grupo D',
-    'Group E': 'Grupo E',
-    'Group f': 'Grupo F',
-    'Group G': 'Grupo G',
-    'Group H': 'Grupo H',
-    'Round of 16': 'Oitavas de Final',
-    'Round of 32': 'Dezesseis-avos de Final',
-    'Round of 64': 'Trinta-e-dois-avos de Final',
-    'Round of 128': 'Sessenta-e-quatro-avos de Final',
-    'First leg': 'Ida',
-    'Second leg': 'Volta',
-    'Third place': 'Terceiro Lugar',
-    'Play-offs': 'Play-offs',
-    'Qualification': 'Qualificação',
-    'Pre-match': 'Pré-jogo',
-};
 
-function traduzirH2H(texto) {
-    if (!texto) return '';
-    let traduzido = texto;
-    Object.keys(H2H_TRANSLATIONS).forEach(key => {
-        const regex = new RegExp(key, 'gi');
-        traduzido = traduzido.replace(regex, H2H_TRANSLATIONS[key]);
-    });
-    return traduzido;
-}
 
 async function carregarH2H() {
     document.getElementById("h2hNomeCasa").innerText = document.getElementById("tvNomeCasa").innerText;
@@ -1349,7 +1279,7 @@ async function carregarH2H() {
 
         const recentes = (eventos || [])
             .filter(ev => ev.status?.code === 100 || ev.status?.type === 'finished')
-            .slice(0, 4);
+            .slice(0, 6);
 
         if (!recentes.length) {
             container.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem jogos recentes</div>';
@@ -1359,22 +1289,30 @@ async function carregarH2H() {
         container.innerHTML = recentes.map(ev => {
             const isHome = ev.homeTeam?.id === teamId;
             const rival = isHome ? (ev.awayTeam?.shortName || ev.awayTeam?.name || '-') : (ev.homeTeam?.shortName || ev.homeTeam?.name || '-');
+            const rivalId = isHome ? ev.awayTeam?.id : ev.homeTeam?.id;
             const golsPro = isHome ? (ev.homeScore?.current ?? 0) : (ev.awayScore?.current ?? 0);
             const golsContra = isHome ? (ev.awayScore?.current ?? 0) : (ev.homeScore?.current ?? 0);
             const data = ev.startTimestamp
                 ? new Date(ev.startTimestamp * 1000).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: APP_TIMEZONE })
                 : '--/--';
+            const comp = ev.tournament?.name || ev.season?.tournament?.name || '';
+            const localizacao = isHome ? 'CASA' : 'FORA';
+            const locCorClass = isHome ? 'text-sky-400' : 'text-orange-400';
             const resultado = golsPro > golsContra ? 'V' : golsPro < golsContra ? 'D' : 'E';
-            const cor = resultado === 'V' ? 'text-emerald-400' : resultado === 'D' ? 'text-red-400' : 'text-gray-300';
+            const cor = resultado === 'V' ? 'text-emerald-400' : resultado === 'D' ? 'text-red-400' : 'text-gray-400';
 
             return `
-                <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2">
-                    <div class="flex flex-col min-w-0">
-                        <span class="text-white font-bold text-sm truncate">${rival}</span>
-                        <span class="text-[10px] uppercase tracking-widest text-gray-500">${data}</span>
+                <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 gap-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-[9px] font-black ${locCorClass} shrink-0">${localizacao}</span>
+                        <img src="${BACKEND_URL}?path=team/${rivalId}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                        <div class="flex flex-col min-w-0">
+                            <span class="text-white font-bold text-xs truncate">${rival}</span>
+                            <span class="text-[9px] uppercase tracking-widest text-gray-500 truncate">${comp || data}</span>
+                        </div>
                     </div>
                     <div class="flex items-center gap-3 shrink-0">
-                        <span class="text-sm font-black ${cor}">${resultado}</span>
+                        <span class="text-xs font-black ${cor}">${resultado}</span>
                         <span class="text-white font-black text-sm">${golsPro}-${golsContra}</span>
                     </div>
                 </div>
@@ -1467,6 +1405,210 @@ async function carregarH2H() {
         }
     };
 
+    // Atualiza nomes no slide 3
+    const nomeCasaEl = document.getElementById("h2hNomeCasaSlide3");
+    const nomeForaEl = document.getElementById("h2hNomeForaSlide3");
+    if (nomeCasaEl) nomeCasaEl.innerText = ' — ' + (document.getElementById("tvNomeCasa")?.innerText || 'CASA');
+    if (nomeForaEl) nomeForaEl.innerText = ' — ' + (document.getElementById("tvNomeFora")?.innerText || 'FORA');
+
+    // Carrega confrontos diretos (Slide 4)
+    const carregarConfrontosDiretos = async () => {
+        const listEl = document.getElementById("h2hDirectList");
+        const scoreEl = document.getElementById("h2hDirectScore");
+        if (!listEl || !currentHomeTeamId || !currentAwayTeamId) {
+            if (listEl) listEl.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Times não identificados</div>';
+            return;
+        }
+        try {
+            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/h2h`);
+            const eventos = data?.previousEvents || data?.events || [];
+            if (!eventos.length) {
+                listEl.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem confrontos diretos registrados</div>';
+                return;
+            }
+            // Conta W/D/L da perspectiva do time da casa
+            let wHome = 0, draws = 0, wAway = 0;
+            eventos.slice(0, 10).forEach(ev => {
+                const hId = ev.homeTeam?.id;
+                const hGoals = ev.homeScore?.current ?? 0;
+                const aGoals = ev.awayScore?.current ?? 0;
+                const homeIsCurrentHome = hId === currentHomeTeamId;
+                const homePro = homeIsCurrentHome ? hGoals : aGoals;
+                const homeContra = homeIsCurrentHome ? aGoals : hGoals;
+                if (homePro > homeContra) wHome++;
+                else if (homePro < homeContra) wAway++;
+                else draws++;
+            });
+
+            const nomeCasa = document.getElementById("tvNomeCasa")?.innerText || 'Casa';
+            const nomeFora = document.getElementById("tvNomeFora")?.innerText || 'Fora';
+
+            if (scoreEl) {
+                scoreEl.innerHTML = `
+                    <div class="flex flex-col items-center">
+                        <img src="${BACKEND_URL}?path=team/${currentHomeTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <span class="text-3xl font-black text-emerald-400">${wHome}</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold">${nomeCasa}</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <span class="text-xl font-black text-gray-500">E</span>
+                        <span class="text-3xl font-black text-gray-300">${draws}</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold">Empates</span>
+                    </div>
+                    <div class="flex flex-col items-center">
+                        <img src="${BACKEND_URL}?path=team/${currentAwayTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <span class="text-3xl font-black text-blue-400">${wAway}</span>
+                        <span class="text-[10px] text-gray-400 uppercase font-bold">${nomeFora}</span>
+                    </div>
+                `;
+            }
+
+            listEl.innerHTML = eventos.slice(0, 6).map(ev => {
+                const hId = ev.homeTeam?.id;
+                const homeIsCurrentHome = hId === currentHomeTeamId;
+                const cHome = homeIsCurrentHome ? ev.homeTeam : ev.awayTeam;
+                const cAway = homeIsCurrentHome ? ev.awayTeam : ev.homeTeam;
+                const gHome = homeIsCurrentHome ? (ev.homeScore?.current ?? '-') : (ev.awayScore?.current ?? '-');
+                const gAway = homeIsCurrentHome ? (ev.awayScore?.current ?? '-') : (ev.homeScore?.current ?? '-');
+                const data = ev.startTimestamp ? new Date(ev.startTimestamp * 1000).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'2-digit', timeZone: APP_TIMEZONE}) : '--';
+                const comp = ev.tournament?.name || ev.season?.tournament?.name || '';
+                const vencedor = gHome > gAway ? 'home' : gHome < gAway ? 'away' : 'draw';
+                const corHome = vencedor === 'home' ? 'text-emerald-400 font-black' : vencedor === 'draw' ? 'text-gray-300' : 'text-gray-500';
+                const corAway = vencedor === 'away' ? 'text-emerald-400 font-black' : vencedor === 'draw' ? 'text-gray-300' : 'text-gray-500';
+                return `
+                    <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs gap-2">
+                        <div class="flex items-center gap-2 w-[35%] min-w-0">
+                            <img src="${BACKEND_URL}?path=team/${cHome?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                            <span class="${corHome} truncate">${cHome?.shortName || cHome?.name || '?'}</span>
+                        </div>
+                        <div class="text-center font-black text-base shrink-0">
+                            <span class="${corHome}">${gHome}</span>
+                            <span class="text-gray-600 mx-1">-</span>
+                            <span class="${corAway}">${gAway}</span>
+                        </div>
+                        <div class="flex items-center gap-2 w-[35%] justify-end min-w-0">
+                            <span class="${corAway} truncate text-right">${cAway?.shortName || cAway?.name || '?'}</span>
+                            <img src="${BACKEND_URL}?path=team/${cAway?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                        </div>
+                        <div class="shrink-0 text-right min-w-[60px]">
+                            <div class="text-gray-500 text-[9px]">${data}</div>
+                            <div class="text-gray-600 text-[9px] truncate max-w-[80px]">${comp}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch(e) {
+            if (listEl) listEl.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Confrontos não disponíveis</div>';
+        }
+    };
+
+    // Carrega Artilheiros do Torneio (Slide 5)
+    const carregarArtilheiros = async () => {
+        const el = document.getElementById("h2hTopScorers");
+        if (!el) return;
+        if (!currentTournamentId || !currentSeasonId) {
+            el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Torneio não identificado</div>';
+            return;
+        }
+        try {
+            const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/top-players/scoring`);
+            const players = data?.topPlayers || data?.players || [];
+            if (!players.length) {
+                el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem dados de artilheiros</div>';
+                return;
+            }
+            const topMax = players[0]?.statistics?.goals || 1;
+            el.innerHTML = players.slice(0, 7).map((p, idx) => {
+                const player = p.player || p;
+                const stats = p.statistics || {};
+                const gols = stats.goals ?? stats.goalsScored ?? 0;
+                const team = p.team || {};
+                const isInGame = team.id === currentHomeTeamId || team.id === currentAwayTeamId;
+                const pct = Math.round((gols / topMax) * 100);
+                const medalha = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}º`;
+                return `
+                    <div class="flex items-center gap-3 rounded-xl border ${isInGame ? 'border-theme-border bg-white/10' : 'border-white/5 bg-black/20'} px-3 py-2">
+                        <span class="text-sm shrink-0 w-6 text-center">${medalha}</span>
+                        <img src="${BACKEND_URL}?path=team/${team?.id}/image" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <span class="text-white font-bold text-sm truncate">${player.shortName || player.name || '?'}</span>
+                                <span class="text-emerald-400 font-black text-lg shrink-0 ml-2">${gols}</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-1 mt-1">
+                                <div class="bg-emerald-500 h-1 rounded-full transition-all" style="width:${pct}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } catch(e) {
+            if (el) el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Artilheiros não disponíveis</div>';
+        }
+    };
+
+    // Carrega Estatísticas ao Vivo (Slide 6)
+    const carregarEstatisticasH2H = async () => {
+        const el = document.getElementById("h2hLiveStats");
+        if (!el || !jogoSelecionadoId) return;
+        try {
+            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/statistics`);
+            const groups = data?.statistics?.[0]?.groups || data?.statistics || [];
+            if (!groups.length) {
+                el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Estatísticas não disponíveis (jogo ainda não começou ou sem dados)</div>';
+                return;
+            }
+
+            const statsMap = {};
+            groups.forEach(g => {
+                (g.statisticsItems || []).forEach(item => {
+                    statsMap[item.name] = item;
+                });
+            });
+
+            const statsExibir = [
+                { key: 'Ball possession', label: 'Posse de Bola', sufixo: '%', tipo: 'percent' },
+                { key: 'Total shots', label: 'Finalizações Totais', tipo: 'bar' },
+                { key: 'Shots on target', label: 'No Alvo', tipo: 'bar' },
+                { key: 'Corner kicks', label: 'Escanteios', tipo: 'bar' },
+                { key: 'Fouls', label: 'Faltas', tipo: 'bar' },
+                { key: 'Yellow cards', label: 'Cartões Amarelos', tipo: 'bar' },
+                { key: 'Passes', label: 'Passes', tipo: 'bar' },
+                { key: 'Tackles', label: 'Desarmes', tipo: 'bar' },
+            ];
+
+            const colorCasa = teamColorCasa || '#22c55e';
+            const colorFora = teamColorFora || '#3b82f6';
+
+            const linhas = statsExibir.map(cfg => {
+                const item = statsMap[cfg.key];
+                if (!item) return '';
+                const hRaw = parseFloat(String(item.home || '0').replace('%',''));
+                const aRaw = parseFloat(String(item.away || '0').replace('%',''));
+                const total = cfg.tipo === 'percent' ? 100 : (hRaw + aRaw) || 1;
+                const hPct = Math.round((hRaw / total) * 100);
+                const aPct = Math.round((aRaw / total) * 100);
+                return `
+                    <div class="flex flex-col gap-1">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-black text-white">${hRaw}${cfg.sufixo || ''}</span>
+                            <span class="text-gray-400 font-bold uppercase tracking-widest text-[9px]">${cfg.label}</span>
+                            <span class="font-black text-white">${aRaw}${cfg.sufixo || ''}</span>
+                        </div>
+                        <div class="flex h-2 rounded-full overflow-hidden bg-gray-800">
+                            <div class="h-full rounded-l-full transition-all" style="width:${hPct}%;background:${colorCasa}"></div>
+                            <div class="h-full rounded-r-full transition-all ml-auto" style="width:${aPct}%;background:${colorFora}"></div>
+                        </div>
+                    </div>
+                `;
+            }).filter(Boolean).join('');
+
+            el.innerHTML = linhas || '<div class="text-center text-gray-500 text-xs italic">Nenhuma estatística disponível</div>';
+        } catch(e) {
+            if (el) el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Estatísticas não disponíveis</div>';
+        }
+    };
+
     if (!currentHomeTeamId || !currentAwayTeamId) {
         renderForm([], "h2hFormCasa");
         renderForm([], "h2hFormFora");
@@ -1481,7 +1623,10 @@ async function carregarH2H() {
     await Promise.all([
         carregarFormaTime(currentHomeTeamId, "h2hFormCasa"),
         carregarFormaTime(currentAwayTeamId, "h2hFormFora"),
-        renderStandings()
+        renderStandings(),
+        carregarConfrontosDiretos(),
+        carregarArtilheiros(),
+        carregarEstatisticasH2H(),
     ]);
     irParaSlideH2H(0);
     iniciarSlidesH2H();
@@ -1510,17 +1655,41 @@ function toggleH2H() {
 function toggleVAR() {
     isVARActive = !isVARActive;
     const overlay = document.getElementById("tvVAROverlay");
+    const timerEl = document.getElementById("tvVARTimer");
     const btn = document.getElementById("btnToggleVAR");
     const btnMan = document.getElementById("btnManVAR");
     
     if (isVARActive) {
+        // Ativar Overlay
         if(overlay) { overlay.classList.remove("hidden"); overlay.classList.add("flex"); }
         if(btn) { btn.classList.replace("bg-gray-900/80", "bg-fuchsia-600"); btn.classList.replace("opacity-20", "opacity-100"); }
         if(btnMan) { btnMan.classList.replace("bg-gray-800", "bg-fuchsia-600"); btnMan.classList.replace("text-fuchsia-500", "text-white"); }
+        
+        // Iniciar Cronômetro do VAR
+        varSeconds = 0;
+        if (timerEl) timerEl.innerText = "00:00";
+        if (varTimerInterval) clearInterval(varTimerInterval);
+        
+        varTimerInterval = setInterval(() => {
+            varSeconds++;
+            if (timerEl) {
+                const mins = Math.floor(varSeconds / 60);
+                const secs = varSeconds % 60;
+                timerEl.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }, 1000);
+        
     } else {
+        // Desativar Overlay
         if(overlay) { overlay.classList.add("hidden"); overlay.classList.remove("flex"); }
         if(btn) { btn.classList.replace("bg-fuchsia-600", "bg-gray-900/80"); btn.classList.replace("opacity-100", "opacity-20"); }
         if(btnMan) { btnMan.classList.replace("bg-fuchsia-600", "bg-gray-800"); btnMan.classList.replace("text-white", "text-fuchsia-500"); }
+        
+        // Parar Cronômetro
+        if (varTimerInterval) {
+            clearInterval(varTimerInterval);
+            varTimerInterval = null;
+        }
     }
 }
 
@@ -1679,11 +1848,7 @@ function toggleArtilheiros() {
             if (btnIcon) btnIcon.classList.replace("fa-eye-slash", "fa-futbol");
             
             // Força a busca imediata dos gols na API ao clicar no botão
-            if (jogoSelecionadoId) {
-                const gc = parseInt(document.getElementById("tvGolsCasa").innerText) || 0;
-                const gf = parseInt(document.getElementById("tvGolsFora").innerText) || 0;
-                buscarArtilheiros(jogoSelecionadoId, gc, gf);
-            }
+                buscarIncidentesSofaScore(jogoSelecionadoId);
         }
     }
 }
@@ -1705,6 +1870,9 @@ function toggleTabela() {
     const painel = document.getElementById("tvPanelTabela");
     const btn = document.getElementById("btnToggleTabela");
     
+    // Fecha o outro painel se aberto
+    if (mostrarTabela && mostrarConfrontos) toggleConfrontos();
+    
     if (mostrarTabela) {
         painel.classList.remove("oculto");
         painel.style.opacity = "1";
@@ -1716,6 +1884,89 @@ function toggleTabela() {
         if (btn) btn.classList.replace("bg-blue-600", "bg-gray-900/80");
         if (scrollTabelaInterval) { clearInterval(scrollTabelaInterval); scrollTabelaInterval = null; }
         if (scrollTabelaTimeout) { clearTimeout(scrollTabelaTimeout); scrollTabelaTimeout = null; }
+    }
+}
+
+function toggleConfrontos() {
+    mostrarConfrontos = !mostrarConfrontos;
+    const painel = document.getElementById("tvPanelConfrontos");
+    const btn = document.getElementById("btnToggleConfrontos");
+    
+    // Fecha o outro painel se aberto
+    if (mostrarConfrontos && mostrarTabela) toggleTabela();
+
+    if (mostrarConfrontos) {
+        painel.classList.remove("oculto");
+        if (btn) btn.classList.replace("bg-gray-900/80", "bg-amber-600");
+        carregarConfrontos();
+    } else {
+        painel.classList.add("oculto");
+        if (btn) btn.classList.replace("bg-amber-600", "bg-gray-900/80");
+    }
+}
+
+async function carregarConfrontos() {
+    const body = document.getElementById("tvConfrontosBody");
+    body.innerHTML = `<div class="flex items-center justify-center p-12 text-gray-500 italic text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Buscando chaves...</div>`;
+
+    if (!currentTournamentId || !currentSeasonId) {
+        body.innerHTML = `<div class="p-8 text-center text-gray-500">Torneio não identificado para chaves.</div>`;
+        return;
+    }
+
+    try {
+        const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/cuptrees`);
+        if (!data || !data.cuptrees || data.cuptrees.length === 0) {
+            body.innerHTML = `<div class="p-8 text-center text-gray-500">Mata-mata não disponível para este torneio.</div>`;
+            return;
+        }
+
+        document.getElementById("confNomeCamp").innerText = "PLAYOFFS / MATA-MATA";
+
+        // Pega a primeira cuptree (geralmente a principal)
+        const tree = data.cuptrees[0];
+        let html = '<div class="cup-container">';
+        
+        // Organiza por Rounds
+        tree.rounds.forEach(round => {
+            html += `<div class="cup-round">`;
+            html += `<div class="cup-round-title">${round.description || 'Fase'}</div>`;
+            
+            round.blocks.forEach(block => {
+                const home = block.homeTeam;
+                const away = block.awayTeam;
+                const scoreHome = block.homeScore?.display ?? '-';
+                const scoreAway = block.awayScore?.display ?? '-';
+                const winnerId = block.winnerId;
+
+                html += `
+                    <div class="cup-match">
+                        <div class="cup-team ${home?.id === winnerId ? 'winner' : ''}">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <img src="${BACKEND_URL}?path=team/${home?.id}/image" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
+                                <span class="cup-team-name">${home?.shortName || home?.name || 'A definir'}</span>
+                            </div>
+                            <span class="cup-score">${scoreHome}</span>
+                        </div>
+                        <div class="cup-team ${away?.id === winnerId ? 'winner' : ''}">
+                            <div class="flex items-center gap-2 overflow-hidden">
+                                <img src="${BACKEND_URL}?path=team/${away?.id}/image" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
+                                <span class="cup-team-name">${away?.shortName || away?.name || 'A definir'}</span>
+                            </div>
+                            <span class="cup-score">${scoreAway}</span>
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        });
+
+        html += '</div>';
+        body.innerHTML = html;
+        
+    } catch (error) {
+        console.error("Erro ao carregar mata-mata:", error);
+        body.innerHTML = `<div class="p-8 text-center text-red-500">Erro ao carregar dados do mata-mata.</div>`;
     }
 }
 
@@ -1763,9 +2014,10 @@ async function carregarTabela(silencioso = false) {
                 const teamId = r.team.id;
                 currentTablePositions[teamId] = pos;
                 const teamName = r.team.shortName || r.team.name;
-                const pts = r.points || 0;
-                const jogos = r.matches || 0;
-                const sg = (r.scoresFor || 0) - (r.scoresAgainst || 0);
+                const pts = r.points ?? 0;
+                const jogos = r.matches ?? r.played ?? 0;
+                // Tenta pegar o saldo de gols direto ou calcula
+                const sg = r.goalsDiff ?? r.scoreDiff ?? ((r.scoresFor ?? 0) - (r.scoresAgainst ?? 0));
 
                 // Cores da zona de classificação
                 let promoColor = 'bg-transparent';
@@ -1773,9 +2025,12 @@ async function carregarTabela(silencioso = false) {
                     const txt = (r.promotion.text || '').toLowerCase();
                     if (txt.includes('libertadores')) promoColor = 'bg-sky-500';
                     else if (txt.includes('sul-americana') || txt.includes('sudamericana')) promoColor = 'bg-orange-500';
-                    else if (txt.includes('relegation') || txt.includes('rebaixamento') || txt.includes('rebaixado')) promoColor = 'bg-red-500';
-                    else if (txt.includes('promotion') || txt.includes('promovido') || txt.includes('série a') || txt.includes('série b')) promoColor = 'bg-emerald-500';
-                    else if (txt.includes('qualifiers') || txt.includes('qualificação')) promoColor = 'bg-cyan-500';
+                    else if (txt.includes('relegation') || txt.includes('rebaixamento') || txt.includes('rebaixado') || txt.includes('rebaixamento')) promoColor = 'bg-red-500';
+                    else if (txt.includes('promotion') || txt.includes('promovido') || txt.includes('série a') || txt.includes('série b') || txt.includes('acesso')) promoColor = 'bg-emerald-500';
+                    else if (txt.includes('qualifiers') || txt.includes('qualificação') || txt.includes('play-off') || txt.includes('playoffs') || txt.includes('qualificado')) promoColor = 'bg-cyan-500';
+                    else if (txt.includes('semifinal') || txt.includes('semifinais')) promoColor = 'bg-amber-500';
+                    else if (txt.includes('quarter-final') || txt.includes('quartas')) promoColor = 'bg-blue-400';
+                    else if (txt.includes('next round') || txt.includes('fase final')) promoColor = 'bg-emerald-400';
                 }
 
                 // Calcula a tendência de subida/descida em tempo real
@@ -1859,8 +2114,9 @@ function iniciarCronometroSofaScore() {
 
 // ========== CONTROLE DE TAMANHO E ARRASTE ==========
 let escalaPlacar = 0.95;
-function mudarTamanho(valor) {
-    escalaPlacar += valor;
+
+function definirEscalaPlacar(escala = 0.95) {
+    escalaPlacar = escala;
     if (escalaPlacar < 0.5) escalaPlacar = 0.5;
     if (escalaPlacar > 1.8) escalaPlacar = 1.8;
     
@@ -1872,9 +2128,13 @@ function mudarTamanho(valor) {
         wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
     }
     
-    document.getElementById("textoTamanho").innerText = Math.round(escalaPlacar * 100) + "%";
+    const txtTam = document.getElementById("textoTamanho");
+    if (txtTam) txtTam.innerText = Math.round(escalaPlacar * 100) + "%";
 }
 
+function mudarTamanho(valor) {
+    definirEscalaPlacar(escalaPlacar + valor);
+}
 
 function inicializarArrastador() {
     const wrapperPlacar = document.getElementById("placarWrapper");
@@ -1934,6 +2194,39 @@ function inicializarArrastadorTabela() {
                 isDragging = false;
                 // Restaurar transição suave após soltar
                 wrapper.style.transition = 'opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
+            }
+        });
+    }
+}
+
+/** Inicializa o arraste do painel de confrontos (Cup Tree) */
+function inicializarArrastadorConfrontos() {
+    const wrapper = document.getElementById("tvPanelConfrontos");
+    const handle = document.getElementById("tvConfrontosHandle");
+    if (wrapper && handle) {
+        let isDragging = false;
+        let offsetX, offsetY;
+        handle.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            const rect = wrapper.getBoundingClientRect();
+            wrapper.style.transition = 'none';
+            wrapper.classList.remove("oculto");
+            
+            wrapper.style.right = 'auto';
+            wrapper.style.left = rect.left + 'px';
+            wrapper.style.top = rect.top + 'px';
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            wrapper.style.left = (e.clientX - offsetX) + 'px';
+            wrapper.style.top = (e.clientY - offsetY) + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                wrapper.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
             }
         });
     }

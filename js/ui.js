@@ -434,7 +434,7 @@ async function buscarJogosSofaScore(forcar = true) {
 
     if (!forcar && cacheJogos && (Date.now() - ultimoFetchCache) < CACHE_TTL) {
         exibirJogosNaLista(cacheJogos);
-        atualizarStatusOperacional('warn', 'Exibindo cache em memÃ³ria.', 'cache local');
+        atualizarStatusOperacional('warn', 'Exibindo cache em memória.', 'cache local');
         painelStatus.innerHTML = `<i class="fa-solid fa-box text-blue-400"></i> Cache: ${cacheJogos.length} jogos (atualizado há ${Math.floor((Date.now() - ultimoFetchCache) / 1000)}s)`;
         return;
     }
@@ -522,7 +522,7 @@ async function buscarJogosSofaScore(forcar = true) {
         } else {
             painelStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Nenhum jogo programado para hoje.`;
             listaDiv.innerHTML = '<div class="text-center text-gray-400 py-12"><i class="fa-solid fa-futbol fa-2x mb-3"></i><p>Nenhuma partida programada para hoje</p></div>';
-            atualizarStatusOperacional('warn', 'Consulta concluÃ­da sem jogos para a data.', 'sofascore live');
+            atualizarStatusOperacional('warn', 'Consulta concluída sem jogos para a data.', 'sofascore live');
         }
     } catch (error) {
         console.error(error);
@@ -533,7 +533,7 @@ async function buscarJogosSofaScore(forcar = true) {
             ultimoFetchCache = fallback.timestamp || Date.now();
             exibirJogosNaLista(cacheJogos);
             painelStatus.innerHTML = `<i class="fa-solid fa-database text-amber-300"></i> Falha na API. Exibindo fallback salvo de ${formatarHoraStatus(fallback.timestamp)}.`;
-            atualizarStatusOperacional('warn', `API indisponÃ­vel. Fallback carregado (${error.message}).`, 'fallback salvo');
+            atualizarStatusOperacional('warn', `API indisponível. Fallback carregado (${error.message}).`, 'fallback salvo');
             return;
         }
         painelStatus.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-400"></i> Erro: ${error.message}`;

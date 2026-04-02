@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Liga o arrastador do placar e da tabela do OBS
     inicializarArrastador();
     inicializarArrastadorTabela();
+    inicializarArrastadorConfrontos();
     if (typeof renderizarStatusOperacional === 'function') renderizarStatusOperacional();
     
     // Sempre iniciar a busca de jogos em segundo plano para que o painel admin 

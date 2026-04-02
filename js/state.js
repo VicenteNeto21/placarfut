@@ -12,6 +12,8 @@ let loopDados = null;
 let loopCronometro = null;
 let manualLoop = null;
 let loopIncidentes = null;
+let varTimerInterval = null;
+let varSeconds = 0;
 
 // Variáveis de tempo
 let minAtual = 0;
@@ -45,6 +47,10 @@ let teamColorCasa = '#3b82f6';
 let teamColorFora = '#ef4444';
 let mostrarH2H = false;
 let mostrarGols = true;
+let mostrarConfrontos = false;
+let mostrarTabela = false;
+let mostrarArtilheiros = false;
+let mostrarEstatisticas = false;
 
 // ========== TORNEIOS CUSTOMIZADOS (LocalStorage) ==========
 let meusTorneios = JSON.parse(localStorage.getItem('futlive_torneios')) || [];

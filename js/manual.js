@@ -67,16 +67,7 @@ function iniciarTransmissaoManual() {
     document.getElementById("uiTransmissao").style.display = "block";
 
     // Escala padrão do placar: 95%
-    escalaPlacar = 0.95;
-    const wrapper = document.getElementById("placarWrapper");
-    if (wrapper) {
-        const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
-        const transX = isCentered ? "translateX(-50%) " : "";
-        wrapper.style.transformOrigin = "bottom center";
-        wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
-    }
-    const txtTam = document.getElementById("textoTamanho");
-    if (txtTam) txtTam.innerText = "95%";
+    if (typeof definirEscalaPlacar === 'function') definirEscalaPlacar(0.95);
 
     document.getElementById("tvScorersBar").classList.add("hidden");
     document.getElementById("tvStatsBar").classList.add("hidden");
@@ -111,16 +102,7 @@ function atualizarPlacarManualNoOBS() {
                 placar.classList.add("layout-nordeste2025");
                 if (wrapper) wrapper.classList.add("layout-nordeste2025");
                 if (h2hCard) h2hCard.classList.add("layout-nordeste2025");
-                // Escala 95% solicitada pelo usuário
-                escalaPlacar = 0.95;
-                if (wrapper) {
-                    const isCentered = !wrapper.style.left || wrapper.style.left === "50%";
-                    const transX = isCentered ? "translateX(-50%) " : "";
-                    wrapper.style.transformOrigin = "bottom center";
-                    wrapper.style.transform = `${transX}scale(${escalaPlacar})`;
-                }
-                const txtTam = document.getElementById("textoTamanho");
-                if (txtTam) txtTam.innerText = "95%";
+                if (typeof definirEscalaPlacar === 'function') definirEscalaPlacar(0.95);
             } else {
                 placar.classList.remove("rounded-xl");
                 placar.classList.add("layout-copa");
@@ -135,7 +117,10 @@ function atualizarPlacarManualNoOBS() {
 
     const elLogoComp = document.getElementById("tvLogoComp");
     if (elLogoComp) {
-        if (tema === 'theme-nordeste2025') {
+        if (tema === 'theme-fifa2026') {
+            elLogoComp.src = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:210&quality=75";
+            elLogoComp.classList.remove("hidden");
+        } else if (tema === 'theme-nordeste2025') {
             elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/1596/image`;
             elLogoComp.classList.remove("hidden");
         } else {
@@ -206,6 +191,7 @@ function atualizarPlacarManualNoOBS() {
 
     const agrC = document.getElementById("manAgrCasa")?.value;
     const agrF = document.getElementById("manAgrFora")?.value;
+    const elAgr = document.getElementById("tvAgregado");
     if (elAgr) {
         if (agrC && agrF) { elAgr.innerHTML = `AGR. ${agrC} - ${agrF}`; elAgr.classList.remove("hidden"); } 
         else { elAgr.classList.add("hidden"); }

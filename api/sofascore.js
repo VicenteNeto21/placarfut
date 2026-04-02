@@ -3,8 +3,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    // Adiciona cache suave de 60s para evitar excesso de requisições e garantir performance
-    res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
 
     // Responde pré‑flight (OPTIONS)
     if (req.method === 'OPTIONS') {
@@ -23,6 +21,15 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Parâmetro "path" é obrigatório' });
     }
 
+    // Segurança: Validar que o path começa com prefixos esperados
+    const allowedPrefixes = [
+        'event/', 'team/', 'sport/', 'unique-tournament/',
+        'category/', 'player/', 'manager/'
+    ];
+    if (!allowedPrefixes.some(p => path.startsWith(p))) {
+        return res.status(400).json({ error: 'Path não permitido' });
+    }
+
     const baseUrls = [
         'https://www.sofascore.com/api/v1',
         'https://api.sofascore.app/api/v1',
@@ -37,6 +44,9 @@ module.exports = async function handler(req, res) {
         'Origin': 'https://www.sofascore.com'
     };
 
+    // Detecta se o path é de imagem (team/ID/image, player/ID/image, unique-tournament/ID/image)
+    const isImageRequest = /\/image(\/|$)/.test(path);
+
     try {
         let lastError = null;
         for (const baseUrl of baseUrls) {
@@ -49,6 +59,20 @@ module.exports = async function handler(req, res) {
                     lastError = new Error(`HTTP ${response.status} em ${baseUrl}`);
                     continue;
                 }
+
+                const contentType = response.headers.get('content-type') || '';
+
+                // Resposta binária (imagens, SVG)
+                if (isImageRequest || contentType.includes('image') || contentType.includes('svg')) {
+                    const buffer = await response.arrayBuffer();
+                    res.setHeader('Content-Type', contentType || 'image/png');
+                    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=3600');
+                    res.status(200).end(Buffer.from(buffer));
+                    return;
+                }
+
+                // Resposta JSON (dados de eventos, estatísticas, etc.)
+                res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
                 const data = await response.json();
                 res.status(200).json(data);
                 return;
