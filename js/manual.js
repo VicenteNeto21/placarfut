@@ -208,3 +208,115 @@ function dispararSubstituicaoManual() {
         mostrarNotificacaoSubstituicao(inName, outName);
     }
 }
+
+// ==========================================
+// LÓGICA DE CONTADOR DE INSCRITOS (TEMPO REAL)
+// ==========================================
+
+let inscritosAutoInterval = null;
+
+function formatarNumeroInscritos(num) {
+    if (num >= 1000000) return (num / 1000000).toFixed(2).replace(/\.00$/, '') + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return new Intl.NumberFormat('pt-BR').format(num);
+}
+
+function atualizarInscritosManual() {
+    const val = document.getElementById("manInscritos").value;
+    document.getElementById("tvSubscribersCount").innerText = val || "--";
+}
+
+function atualizarUltimoInscrito() {
+    const val = document.getElementById("manUltimoInscrito").value;
+    document.getElementById("tvUltimoInscritoNome").innerText = val || "Aguardando...";
+}
+
+function toggleInscritosVisibilidade() {
+    const badge = document.getElementById("tvSubscribersBadge");
+    const btn = document.getElementById("btnToggleInscritos");
+    
+    if (badge.classList.contains("hidden")) {
+        badge.classList.remove("hidden");
+        if (btn) {
+            btn.innerHTML = '<i class="fa-brands fa-youtube"></i> OCULTAR INSCRITOS';
+            btn.classList.add("opacity-100", "border-red-500", "bg-red-600");
+            btn.classList.remove("opacity-20", "bg-gray-900/80");
+        }
+    } else {
+        badge.classList.add("hidden");
+        if (btn) {
+            btn.innerHTML = '<i class="fa-brands fa-youtube"></i> INSCRITOS';
+            btn.classList.remove("opacity-100", "border-red-500", "bg-red-600");
+            btn.classList.add("opacity-20", "bg-gray-900/80");
+        }
+    }
+}
+
+function iniciarContadorInscritosAuto() {
+    const apiKey = document.getElementById("manApiKey").value.trim();
+    const channelId = document.getElementById("manChannelId").value.trim();
+    const btn = document.getElementById("btnAutoInscritos");
+
+    if (inscritosAutoInterval) {
+        // Desligar
+        clearInterval(inscritosAutoInterval);
+        inscritosAutoInterval = null;
+        btn.innerHTML = '<i class="fa-solid fa-rotate"></i> AUTO';
+        btn.classList.replace("bg-emerald-600", "bg-red-600");
+        return;
+    }
+
+    if (!channelId) {
+        alert("Por favor, preencha o ID do Canal do YouTube (Ex: UC...).");
+        return;
+    }
+
+    if (!apiKey || apiKey.includes(".apps.googleusercontent.com")) {
+        alert("Parece que você colocou um ID de Cliente OAuth em vez de uma Chave de API (API Key). A Chave de API do YouTube tem cerca de 39 caracteres e começa com 'AIza'.");
+        return;
+    }
+
+    // Ligar
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> AUTO ON';
+    btn.classList.replace("bg-red-600", "bg-emerald-600");
+    
+    // Mostra o badge se estiver escondido
+    const badge = document.getElementById("tvSubscribersBadge");
+    if (badge.classList.contains("hidden")) {
+        toggleInscritosVisibilidade();
+    }
+
+    const fetchSubscribers = async () => {
+        try {
+            document.getElementById("tvSubscribersCount").innerText = "...";
+            const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&id=${channelId}&key=${apiKey}`);
+            const data = await res.json();
+            
+            if (data.items && data.items.length > 0) {
+                const count = parseInt(data.items[0].statistics.subscriberCount);
+                if (!isNaN(count)) {
+                    document.getElementById("tvSubscribersCount").innerText = formatarNumeroInscritos(count);
+                    document.getElementById("manInscritos").value = formatarNumeroInscritos(count);
+                    document.getElementById("tvSubscribersCount").style.fontSize = "1rem";
+                }
+            } else if (data.error) {
+                console.error("Erro na API do YouTube:", data.error.message);
+                document.getElementById("tvSubscribersCount").innerText = "ERRO 403";
+                document.getElementById("tvSubscribersCount").style.fontSize = "10px";
+                alert("Erro da API: " + data.error.message);
+                clearInterval(inscritosAutoInterval);
+                inscritosAutoInterval = null;
+                btn.innerHTML = '<i class="fa-solid fa-rotate"></i> AUTO';
+                btn.classList.replace("bg-emerald-600", "bg-red-600");
+            } else {
+                document.getElementById("tvSubscribersCount").innerText = "S/DADOS";
+            }
+        } catch (err) {
+            console.error("Erro ao buscar inscritos:", err);
+            document.getElementById("tvSubscribersCount").innerText = "ERRO NET";
+        }
+    };
+
+    fetchSubscribers(); // primeira chamada
+    inscritosAutoInterval = setInterval(fetchSubscribers, 30000); // Atualiza a cada 30 segundos para não estourar o limite da API
+}

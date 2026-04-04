@@ -1,5 +1,5 @@
 // ========== js/state.js ==========
-// Cofre de Estados da Aplicação
+// Cofre de Estados da Aplicação — Centralizado
 
 // Estado do fluxo principal
 let modoAtual = 'auto'; // 'auto' ou 'manual'
@@ -51,6 +51,24 @@ let mostrarConfrontos = false;
 let mostrarTabela = false;
 let mostrarArtilheiros = false;
 let mostrarEstatisticas = false;
+
+// Estados do Broadcast (movidos de broadcast.js para centralizar)
+let currentTournamentId = null;
+let currentSeasonId = null;
+let currentTournamentLabel = "";
+let tickerObserverLoop = null;
+let currentHomeTeamId = null;
+let currentAwayTeamId = null;
+let scrollTabelaInterval = null;
+let scrollTabelaTimeout = null;
+let prevTablePositions = {};
+let tableTrends = {};
+let h2hCountdownInterval = null;
+let h2hSlideAtual = 0;
+let h2hSlideInterval = null;
+let estaTrocandoLabel = false;
+let isBestPlayerShowing = false;
+let escalaPlacar = 0.95;
 
 // ========== TORNEIOS CUSTOMIZADOS (LocalStorage) ==========
 let meusTorneios = JSON.parse(localStorage.getItem('futlive_torneios')) || [];
@@ -116,4 +134,47 @@ function carregarSessaoAtiva() {
     } catch (e) {
         return null;
     }
+}
+
+/**
+ * Limpa todos os intervals ativos de uma vez.
+ */
+function limparTodosIntervals() {
+    if (loopDados) { clearInterval(loopDados); loopDados = null; }
+    if (loopCronometro) { clearInterval(loopCronometro); loopCronometro = null; }
+    if (manualLoop) { clearInterval(manualLoop); manualLoop = null; }
+    if (loopIncidentes) { clearInterval(loopIncidentes); loopIncidentes = null; }
+    if (tickerObserverLoop) { clearInterval(tickerObserverLoop); tickerObserverLoop = null; }
+    if (scrollTabelaInterval) { clearInterval(scrollTabelaInterval); scrollTabelaInterval = null; }
+    if (scrollTabelaTimeout) { clearTimeout(scrollTabelaTimeout); scrollTabelaTimeout = null; }
+    if (h2hCountdownInterval) { clearInterval(h2hCountdownInterval); h2hCountdownInterval = null; }
+    if (h2hSlideInterval) { clearInterval(h2hSlideInterval); h2hSlideInterval = null; }
+    if (varTimerInterval) { clearInterval(varTimerInterval); varTimerInterval = null; }
+}
+
+/**
+ * Reseta o estado global de volta ao padrão.
+ */
+function resetarEstadoGlobal() {
+    jogoSelecionadoId = null;
+    cronometroRodando = false;
+    manualTimerRunning = false;
+    minAtual = 0;
+    segAtual = 0;
+    ultimoPlacar = { casa: -1, fora: -1 };
+    currentEventData = null;
+    currentTournamentId = null;
+    currentSeasonId = null;
+    currentTournamentLabel = "";
+    currentHomeTeamId = null;
+    currentAwayTeamId = null;
+    mostrarTabela = false;
+    mostrarEstatisticas = false;
+    mostrarConfrontos = false;
+    prevTablePositions = {};
+    tableTrends = {};
+    mostrarH2H = false;
+    isVARActive = false;
+    isBestPlayerShowing = false;
+    estaTrocandoLabel = false;
 }

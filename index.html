@@ -4,12 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="FutLivePRO - Sistema profissional de transmissão esportiva">
     <title>FutLivePRO - Placar Futebol Brasileiro</title>
-    <link rel="icon" type="image/png" href="favicon.png">
+    <!-- Favicon inline SVG para evitar erro 404 e usar as cores certas (Verde Esmeralda) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230a0e17'/%3E%3Cpath d='M30,70 L30,30 L70,30 L70,45 L45,45 L45,55 L65,55 L65,70 L50,70 L50,60 L30,60 Z' fill='%2310b981'/%3E%3C/svg%3E">
+    <script>
+        // Suprimir o warning do Tailwind CDN
+        const originalWarn = console.warn;
+        console.warn = function (msg, ...args) {
+            if (typeof msg === 'string' && msg.includes('cdn.tailwindcss.com should not be used in production')) return;
+            originalWarn(msg, ...args);
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link
-        href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@400;700;900&family=Montserrat:wght@800;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Exo:wght@400;700;900&family=Roboto+Condensed:wght@400;700;900&family=Montserrat:wght@800;900&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css?v=5">
 </head>
@@ -19,29 +29,29 @@
     <!-- PAINEL DE ADMINISTRAÇÃO -->
     <div id="painelAdmin" class="h-screen bg-[#0a0e17] z-50 absolute w-full top-0 left-0 overflow-y-auto">
 
-        <!-- Top Bar -->
-        <div class="sticky top-0 z-40 bg-[#0a0e17]/95 backdrop-blur-md border-b border-white/5">
+        <!-- Top Bar com Efeito Premium Glassmorphism -->
+        <div class="sticky top-0 z-40 bg-[#0a0e17]/80 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)]">
             <div class="w-full mx-auto px-6 py-4 flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-3 group cursor-pointer">
                     <div
-                        class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                        <i class="fa-solid fa-futbol text-white text-lg"></i>
+                        class="w-11 h-11 bg-gradient-to-br from-emerald-400 to-emerald-700 rounded-xl flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.4)] group-hover:shadow-[0_0_25px_rgba(16,185,129,0.7)] transition-all duration-300">
+                        <i class="fa-solid fa-futbol text-white text-xl group-hover:rotate-180 transition-transform duration-700"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-black text-white tracking-tight">FUTLIVE<span
+                        <h1 class="text-2xl font-black text-white tracking-tight drop-shadow-md">FUTLIVE<span
                                 class="text-emerald-400">PRO</span></h1>
-                        <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Futebol Brasileiro &
+                        <p class="text-[10px] text-emerald-500/80 font-bold uppercase tracking-widest">Futebol Brasileiro &
                             Sul-Americano</p>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 p-1.5 bg-[#0f172a] rounded-xl border border-slate-700/50 shadow-inner">
                     <button onclick="mudarAba('auto')" id="tabAuto" title="Ver Jogos Automáticos"
-                        class="tab-btn active px-4 py-2 rounded-lg text-sm font-bold transition-all">
-                        <i class="fa-solid fa-futbol mr-1"></i> Jogos
+                        class="tab-btn active px-6 py-2.5 rounded-lg text-sm font-black transition-all flex items-center gap-2 text-slate-300">
+                        <i class="fa-solid fa-bolt text-emerald-400"></i> <span class="tracking-widest">AUTO</span>
                     </button>
                     <button onclick="mudarAba('manual')" id="tabManual" title="Configurar Placar Manual"
-                        class="tab-btn px-4 py-2 rounded-lg text-sm font-bold transition-all">
-                        <i class="fa-solid fa-gamepad mr-1"></i> Manual
+                        class="tab-btn px-6 py-2.5 rounded-lg text-sm font-black transition-all flex items-center gap-2 text-slate-300">
+                        <i class="fa-solid fa-gamepad text-blue-400"></i> <span class="tracking-widest">MANUAL</span>
                     </button>
                 </div>
             </div>
@@ -217,21 +227,26 @@
 
         <!-- Aba MODO MANUAL -->
         <div id="contentManual" class="tab-content">
-            <div class="w-full mx-auto px-6 py-6">
-                <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-                    <h3 class="text-lg font-black text-white mb-5 flex items-center gap-2">
-                        <i class="fa-solid fa-gamepad text-emerald-400"></i> Configurar Placar Manual
-                    </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div class="md:col-span-2">
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Campeonato</label>
-                            <input type="text" id="manCamp" value="FUTEBOL LOCAL" title="Nome do Campeonato"
-                                placeholder="Ex: Brasileirão">
+            <div class="w-full max-w-5xl mx-auto px-6 py-8">
+                <div class="bg-gradient-to-b from-[#0f172a] to-[#0a0f1a] border border-slate-800/80 rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                    <!-- Detalhe de fundo visual para manual -->
+                    <div class="absolute top-0 right-0 w-96 h-96 bg-emerald-500/5 rounded-full filter blur-[100px] pointer-events-none"></div>
+
+                    <h3 class="text-2xl font-black text-white mb-8 flex items-center gap-3 relative z-10">
+                        <div class="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                            <i class="fa-solid fa-gamepad text-blue-400 text-lg"></i>
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Tema do Placar</label>
-                            <select id="manTema" title="Selecionar tema do placar"
-                                onchange="atualizarPlacarManualNoOBS()">
+                        Configuração Manual
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm">
+                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block"><i class="fa-solid fa-trophy mr-2 text-emerald-500"></i> Campeonato</label>
+                            <input type="text" id="manCamp" value="FUTEBOL LOCAL" title="Nome do Campeonato"
+                                placeholder="Ex: Brasileirão" class="text-lg">
+                        </div>
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm mt-[-10px]">
+                            <label class="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 block"><i class="fa-solid fa-paintbrush mr-2 text-blue-400"></i> Tema do Placar</label>
+                            <select id="manTema" title="Selecionar tema do placar" onchange="atualizarPlacarManualNoOBS()" class="text-lg">
                                 <option value="">Padrão (Azul/Grafite)</option>
                                 <option value="theme-libertadores">Libertadores (Dourado/Preto)</option>
                                 <option value="theme-sulamericana">Sul-Americana (Azul Escuro)</option>
@@ -243,57 +258,68 @@
                                 <option value="theme-fifa2026">FIFA World Cup 2026</option>
                             </select>
                         </div>
+                        
                         <!-- Time Casa -->
-                        <div class="bg-white/5 p-5 rounded-xl border border-white/10">
-                            <h4 class="font-black text-emerald-400 mb-3 text-sm uppercase tracking-wider">
-                                <i class="fa-solid fa-shield-halved mr-1"></i> Time Casa
-                            </h4>
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sigla</label>
-                            <input type="text" id="manCasaNome" value="CASA" class="mb-3" title="Sigla do Time da Casa"
+                        <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-6 rounded-2xl border border-slate-700 shadow-md hover:border-emerald-500/30 transition-all">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                                    <i class="fa-solid fa-house text-emerald-400 text-sm"></i>
+                                </div>
+                                <h4 class="font-black text-emerald-400 text-base uppercase tracking-widest m-0">Time Mandante</h4>
+                            </div>
+                            
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block">Sigla (3 Letras)</label>
+                            <input type="text" id="manCasaNome" value="CASA" class="mb-5 text-xl font-black tracking-widest uppercase text-center" title="Sigla do Time da Casa"
                                 placeholder="Ex: FLA">
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Link Logo</label>
-                            <input type="text" id="manCasaLogo" class="mb-4" title="URL da Logo do Time da Casa"
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block">Link Logo (SVG/PNG)</label>
+                            <input type="text" id="manCasaLogo" class="mb-6" title="URL da Logo do Time da Casa"
                                 placeholder="https://...">
-                            <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg">
-                                <span class="font-bold text-sm text-gray-300">Gols</span>
-                                <div class="flex items-center gap-3">
+                                
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block text-center">Controle de Gols</label>
+                                <div class="flex items-center justify-between bg-slate-900 overflow-hidden rounded-xl border border-slate-700 p-2 shadow-inner">
                                     <button onclick="manGols('casa', -1)"
-                                        class="bg-red-600 hover:bg-red-500 w-8 h-8 rounded-lg font-black transition-colors">-</button>
+                                        class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 w-12 h-10 rounded-lg font-black text-xl transition-colors shadow-sm">-</button>
                                     <span id="manCasaGolsDisplay"
-                                        class="text-2xl font-black w-8 text-center text-white">0</span>
+                                        class="text-4xl font-black w-14 text-center text-white font-mono drop-shadow-md">0</span>
                                     <button onclick="manGols('casa', 1)"
-                                        class="bg-emerald-600 hover:bg-emerald-500 w-8 h-8 rounded-lg font-black transition-colors">+</button>
+                                        class="bg-emerald-600 hover:bg-emerald-500 border border-emerald-400 text-white w-12 h-10 rounded-lg font-black text-xl transition-colors shadow-sm">+</button>
                                 </div>
                             </div>
                         </div>
+                        
                         <!-- Time Fora -->
-                        <div class="bg-white/5 p-5 rounded-xl border border-white/10">
-                            <h4 class="font-black text-emerald-400 mb-3 text-sm uppercase tracking-wider">
-                                <i class="fa-solid fa-shield-halved mr-1"></i> Time Fora
-                            </h4>
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sigla</label>
-                            <input type="text" id="manForaNome" value="FORA" class="mb-3" title="Sigla do Time de Fora"
+                        <div class="bg-gradient-to-br from-slate-800/80 to-slate-900/80 p-6 rounded-2xl border border-slate-700 shadow-md hover:border-blue-500/30 transition-all">
+                            <div class="flex items-center gap-3 mb-6">
+                                <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center border border-blue-500/30">
+                                    <i class="fa-solid fa-plane text-blue-400 text-sm"></i>
+                                </div>
+                                <h4 class="font-black text-blue-400 text-base uppercase tracking-widest m-0">Time Visitante</h4>
+                            </div>
+                            
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block">Sigla (3 Letras)</label>
+                            <input type="text" id="manForaNome" value="FORA" class="mb-5 text-xl font-black tracking-widest uppercase text-center" title="Sigla do Time de Fora"
                                 placeholder="Ex: VAS">
-                            <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Link Logo</label>
-                            <input type="text" id="manForaLogo" class="mb-4" title="URL da Logo do Time de Fora"
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block">Link Logo (SVG/PNG)</label>
+                            <input type="text" id="manForaLogo" class="mb-6" title="URL da Logo do Time de Fora"
                                 placeholder="https://...">
-                            <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg">
-                                <span class="font-bold text-sm text-gray-300">Gols</span>
-                                <div class="flex items-center gap-3">
+                                
+                            <div class="flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block text-center">Controle de Gols</label>
+                                <div class="flex items-center justify-between bg-slate-900 overflow-hidden rounded-xl border border-slate-700 p-2 shadow-inner">
                                     <button onclick="manGols('fora', -1)"
-                                        class="bg-red-600 hover:bg-red-500 w-8 h-8 rounded-lg font-black transition-colors">-</button>
+                                        class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 w-12 h-10 rounded-lg font-black text-xl transition-colors shadow-sm">-</button>
                                     <span id="manForaGolsDisplay"
-                                        class="text-2xl font-black w-8 text-center text-white">0</span>
+                                        class="text-4xl font-black w-14 text-center text-white font-mono drop-shadow-md">0</span>
                                     <button onclick="manGols('fora', 1)"
-                                        class="bg-emerald-600 hover:bg-emerald-500 w-8 h-8 rounded-lg font-black transition-colors">+</button>
+                                        class="bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white w-12 h-10 rounded-lg font-black text-xl transition-colors shadow-sm">+</button>
                                 </div>
                             </div>
                         </div>
                         <!-- Cronômetro -->
-                        <div
-                            class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap items-center gap-5">
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Período</label>
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col md:flex-row items-center gap-6">
+                            <div class="flex-1 w-full min-w-[200px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-regular fa-clock mr-1"></i> Período do Jogo</label>
                                 <select id="manPeriodo" title="Selecionar Período do Jogo"
                                     onchange="atualizarPlacarManualNoOBS()">
                                     <option value="PRÉ-JOGO">Pré-Jogo</option>
@@ -303,100 +329,130 @@
                                     <option value="FIM DE JOGO">Fim de Jogo</option>
                                 </select>
                             </div>
-                            <div class="flex items-center gap-3 bg-black/30 px-4 py-2.5 rounded-lg">
+                            
+                            <div class="flex bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-inner flex-shrink-0">
                                 <input type="number" id="manMin" value="0"
-                                    class="w-14 text-center text-xl font-black p-1" title="Minutos" placeholder="00">
-                                <span class="text-2xl font-black text-gray-400">:</span>
+                                    class="w-16 h-12 bg-transparent text-center text-2xl font-black text-white outline-none focus:ring-0 border-none !shadow-none !p-0" title="Minutos" placeholder="00">
+                                <div class="flex items-center justify-center font-black text-slate-500 text-xl w-4 pb-1">:</div>
                                 <input type="number" id="manSeg" value="0"
-                                    class="w-14 text-center text-xl font-black p-1" title="Segundos" placeholder="00">
+                                    class="w-16 h-12 bg-transparent text-center text-2xl font-black text-white outline-none focus:ring-0 border-none !shadow-none !p-0" title="Segundos" placeholder="00">
                             </div>
-                            <div class="flex flex-col ml-2">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Acréscimos</label>
-                                <div
-                                    class="flex items-center gap-1 bg-black/30 px-3 py-2.5 rounded-lg border border-transparent focus-within:border-red-500">
-                                    <span class="text-lg font-black text-red-500">+</span>
+
+                            <div class="flex flex-col flex-shrink-0">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block text-center">Acrésc.</label>
+                                <div class="flex items-center justify-center bg-slate-900 px-3 h-12 rounded-xl border border-slate-700 shadow-inner group focus-within:border-red-500">
+                                    <span class="text-xl font-black text-slate-500 group-focus-within:text-red-500 mr-1">+</span>
                                     <input type="number" id="manAcrescimo" value="0"
-                                        class="w-12 text-center text-xl font-black p-0 text-red-400 bg-transparent border-none outline-none focus:ring-0"
+                                        class="w-8 !bg-transparent !p-0 text-center text-2xl font-black text-red-400 border-none outline-none focus:ring-0 !shadow-none"
                                         title="Acréscimos" oninput="atualizarPlacarManualNoOBS()">
                                 </div>
                             </div>
+
                             <button onclick="toggleManualTimer()" id="btnManTimer"
-                                class="bg-white/10 hover:bg-emerald-600 px-5 py-2.5 rounded-lg font-black text-sm transition-colors text-white">
-                                <i class="fa-solid fa-play mr-1"></i> PLAY
+                                class="w-full md:w-auto h-12 bg-emerald-600 hover:bg-emerald-500 text-white px-8 rounded-xl font-black text-base transition-colors shadow-lg shadow-emerald-500/20 whitespace-nowrap">
+                                <i class="fa-solid fa-play mr-2"></i> PLAY TIMMER
                             </button>
                         </div>
 
                         <!-- Pênaltis e Agregado (Manual) -->
-                        <div
-                            class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap gap-5">
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Pênaltis (Casa x
-                                    Fora)</label>
-                                <div
-                                    class="flex items-center gap-3 bg-black/30 px-3 py-2 rounded-lg border border-transparent focus-within:border-yellow-500">
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm flex flex-wrap gap-6 items-end">
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block text-center">Pênaltis</label>
+                                <div class="flex items-center justify-between bg-slate-900 h-14 px-4 rounded-xl border border-slate-700 shadow-inner group focus-within:border-yellow-500">
                                     <input type="number" id="manPenCasa"
-                                        class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-yellow-400"
-                                        placeholder="-" oninput="atualizarPlacarManualNoOBS()">
-                                    <span class="text-gray-500 font-black">X</span>
+                                        class="w-12 !bg-transparent !text-yellow-400 !border-none !shadow-none text-center text-2xl font-black outline-none focus:ring-0 !p-0" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                    <span class="text-slate-600 font-black text-lg">X</span>
                                     <input type="number" id="manPenFora"
-                                        class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-yellow-400"
-                                        placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                        class="w-12 !bg-transparent !text-yellow-400 !border-none !shadow-none text-center text-2xl font-black outline-none focus:ring-0 !p-0" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
                                 </div>
                             </div>
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Agregado (Casa x
-                                    Fora)</label>
-                                <div
-                                    class="flex items-center gap-3 bg-black/30 px-3 py-2 rounded-lg border border-transparent focus-within:border-blue-500">
+                            
+                            <div class="flex-1 min-w-[200px]">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block text-center">Placar Agregado</label>
+                                <div class="flex items-center justify-between bg-slate-900 h-14 px-4 rounded-xl border border-slate-700 shadow-inner group focus-within:border-indigo-500">
                                     <input type="number" id="manAgrCasa"
-                                        class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-white"
-                                        placeholder="-" oninput="atualizarPlacarManualNoOBS()">
-                                    <span class="text-gray-500 font-black">X</span>
+                                        class="w-12 !bg-transparent !text-white !border-none !shadow-none text-center text-2xl font-black outline-none focus:ring-0 !p-0" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                    <span class="text-slate-600 font-black text-lg">X</span>
                                     <input type="number" id="manAgrFora"
-                                        class="w-12 text-center text-lg font-black p-1 bg-transparent border-none outline-none focus:ring-0 text-white"
-                                        placeholder="-" oninput="atualizarPlacarManualNoOBS()">
+                                        class="w-12 !bg-transparent !text-white !border-none !shadow-none text-center text-2xl font-black outline-none focus:ring-0 !p-0" placeholder="-" oninput="atualizarPlacarManualNoOBS()">
                                 </div>
                             </div>
-                            <div class="flex items-end gap-2">
+                            
+                            <div class="flex gap-3 h-14">
                                 <button onclick="toggleVAR()" id="btnManVAR"
-                                    class="bg-gray-800 hover:bg-fuchsia-600 text-fuchsia-500 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-full border border-fuchsia-500/20 shadow-md flex items-center gap-1">
+                                    class="bg-slate-800 hover:bg-fuchsia-600 text-fuchsia-400 hover:text-white px-6 rounded-xl font-bold transition-all border border-fuchsia-500/30 shadow-md flex items-center gap-2">
                                     <i class="fa-solid fa-tv"></i> VAR
                                 </button>
                                 <button onclick="resetarPlacarManual()"
-                                    class="bg-red-500/10 hover:bg-red-600 text-red-500 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-full border border-red-500/20 shadow-md">
-                                    <i class="fa-solid fa-rotate-left"></i> Limpar Tudo
+                                    class="bg-slate-800 hover:bg-red-600 text-red-400 hover:text-white px-6 rounded-xl font-bold transition-all border border-red-500/30 shadow-md flex items-center gap-2">
+                                    <i class="fa-solid fa-rotate-left"></i> Limpar
                                 </button>
                             </div>
                         </div>
 
                         <!-- Substituição (Manual) -->
-                        <div
-                            class="md:col-span-2 bg-white/5 p-5 rounded-xl border border-white/10 flex flex-wrap gap-5">
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Entra (IN)</label>
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col md:flex-row gap-6">
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-solid fa-arrow-right-to-bracket text-emerald-400 mr-1"></i> Jogador Entrando</label>
                                 <input type="text" id="manSubIn"
-                                    class="w-full text-sm font-bold p-2.5 bg-black/30 rounded-lg border border-transparent focus:border-green-500 text-green-400 outline-none"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-emerald-500 !text-emerald-400"
                                     placeholder="Ex: Pedro (9)">
                             </div>
-                            <div class="flex-1 min-w-[150px]">
-                                <label class="text-xs font-bold text-gray-500 uppercase mb-1 block">Sai (OUT)</label>
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-solid fa-arrow-right-from-bracket text-red-400 mr-1"></i> Jogador Saindo</label>
                                 <input type="text" id="manSubOut"
-                                    class="w-full text-sm font-bold p-2.5 bg-black/30 rounded-lg border border-transparent focus:border-red-500 text-red-400 outline-none"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-red-500 !text-red-400"
                                     placeholder="Ex: Gabriel B. (10)">
                             </div>
-                            <div class="flex items-end gap-2">
+                            <div class="flex items-end">
                                 <button onclick="dispararSubstituicaoManual()"
-                                    class="bg-gray-800 hover:bg-indigo-600 text-indigo-400 hover:text-white px-4 py-2.5 rounded-lg font-bold transition-all text-sm h-[44px] border border-indigo-500/20 shadow-md flex items-center gap-2">
-                                    <i class="fa-solid fa-rotate"></i> Mostrar Placa
+                                    class="w-full h-[46px] md:w-auto bg-slate-700 hover:bg-indigo-600 text-white px-8 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-rotate"></i> PLAQUINHA
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Contador de Inscritos em Tempo Real -->
+                        <div class="md:col-span-2 bg-slate-800/40 p-6 rounded-2xl border border-slate-700/50 shadow-sm flex flex-col md:flex-row gap-6 items-end mt-2">
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-brands fa-youtube text-red-500 mr-1"></i> Inscritos (Manual)</label>
+                                <input type="text" id="manInscritos"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-red-500 !text-white"
+                                    placeholder="Ex: 10.5K" oninput="atualizarInscritosManual()">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-solid fa-robot text-emerald-400 mr-1"></i> ID do Canal (Automático)</label>
+                                <input type="text" id="manChannelId" value="UC9Vc-BvRY93CZ9-OnlzsoCg"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-emerald-500 !text-emerald-400"
+                                    placeholder="Ex: UC...">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-solid fa-key text-yellow-400 mr-1"></i> Chave API do YouTube</label>
+                                <input type="password" id="manApiKey" value="AIzaSyBk5Lz4jlBPvOZW3bfpwWpgEwLZNO70Nyo"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-yellow-500 !text-yellow-400"
+                                    placeholder="Cole a API Key aqui">
+                            </div>
+                            <div class="flex-1">
+                                <label class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2 block"><i class="fa-solid fa-user text-sky-400 mr-1"></i> Último Inscrito (Manual)</label>
+                                <input type="text" id="manUltimoInscrito"
+                                    class="!bg-slate-900 border !border-slate-700 focus:!border-sky-500 !text-sky-400"
+                                    placeholder="Ex: João Silva" oninput="atualizarUltimoInscrito()">
+                            </div>
+                            <div class="flex items-end gap-2">
+                                <button onclick="iniciarContadorInscritosAuto()" id="btnAutoInscritos"
+                                    class="h-[46px] bg-red-600 hover:bg-red-500 text-white px-6 rounded-xl font-bold transition-all shadow-md flex items-center justify-center gap-2" title="Requer Chave API">
+                                    <i class="fa-solid fa-rotate"></i> AUTO
                                 </button>
                             </div>
                         </div>
 
                         <!-- Botão Transmitir -->
-                        <button onclick="iniciarTransmissaoManual()"
-                            class="md:col-span-2 bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white py-4 rounded-xl font-black text-lg uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-tower-broadcast"></i> Transmitir Manual
-                        </button>
+                        <div class="md:col-span-2 mt-4">
+                            <button onclick="iniciarTransmissaoManual()"
+                                class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white py-5 rounded-2xl font-black text-xl uppercase tracking-widest shadow-[0_10px_30px_rgba(16,185,129,0.3)] hover:shadow-[0_15px_40px_rgba(16,185,129,0.5)] transition-all flex items-center justify-center gap-4 hover:-translate-y-1">
+                                <i class="fa-solid fa-tower-broadcast text-2xl animate-pulse"></i> INICIAR TRANSMISSÃO MANUAL
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -414,6 +470,10 @@
             <button onclick="toggleArtilheiros()" id="btnToggleGols"
                 class="bg-gray-900/80 hover:bg-yellow-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-yellow-500 backdrop-blur-md opacity-20 hover:opacity-100">
                 <i class="fa-solid fa-futbol"></i> GOLS
+            </button>
+            <button onclick="toggleInscritosVisibilidade()" id="btnToggleInscritos"
+                class="bg-gray-900/80 hover:bg-red-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-red-500 backdrop-blur-md opacity-20 hover:opacity-100">
+                <i class="fa-brands fa-youtube"></i> INSCRITOS
             </button>
             <button onclick="toggleTabela()" id="btnToggleTabela"
                 class="bg-gray-900/80 hover:bg-blue-600 text-white font-black px-4 py-2 rounded-lg shadow-xl transition-all flex items-center justify-center gap-2 border border-gray-700 hover:border-blue-500 backdrop-blur-md opacity-20 hover:opacity-100">
@@ -515,6 +575,27 @@
                     <span id="tvCardTime" class="text-gray-400 font-bold text-sm uppercase">23' - FLAMENGO</span>
                 </div>
             </div>
+            
+            <!-- BADGE DE INSCRITOS (ACIMA DO PLACAR) -->
+            <div id="tvSubscribersBadge" class="hidden absolute left-1/2 -top-11 -translate-x-1/2 flex items-center justify-center gap-4 bg-gray-900 border border-gray-700 px-5 py-1.5 rounded-xl z-0 transition-all duration-500 shadow-2xl">
+                <div class="flex items-center gap-2">
+                    <div class="relative flex items-center justify-center">
+                        <div class="absolute inset-0 bg-red-600 rounded-full blur-sm opacity-50 animate-pulse"></div>
+                        <i class="fa-brands fa-youtube text-red-500 text-xl relative z-10"></i>
+                    </div>
+                    <div class="flex flex-col">
+                        <span id="tvSubscribersCount" class="text-white font-black text-lg leading-none tracking-tight">--</span>
+                        <span class="text-[8px] text-gray-400 font-bold uppercase tracking-[0.2em] leading-none mt-0.5">Inscritos</span>
+                    </div>
+                </div>
+                <!-- Divisor e Último Inscrito -->
+                <div class="w-px h-8 bg-gray-700 mx-1"></div>
+                <div class="flex flex-col min-w-[100px]">
+                    <span id="tvUltimoInscritoNome" class="text-sky-400 font-black text-sm uppercase leading-none truncate max-w-[150px]">Aguardando...</span>
+                    <span class="text-[8px] text-gray-500 font-bold uppercase tracking-[0.2em] leading-none mt-1">Último Inscrito</span>
+                </div>
+            </div>
+
             <div id="placarCard"
                 class="placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10 transition-all duration-500">
                 <!-- BARRA DE SUBSTITUIÇÃO (ACIMA) -->
@@ -542,7 +623,7 @@
                             class="text-gray-400 font-bold uppercase tracking-widest text-xs truncate">FUTLIVE
                             LIVE</span>
                     </span>
-                    <div class="flex items-center justify-center gap-2 w-1/3" onmousedown="event.stopPropagation()">
+                    <div class="invisible flex items-center justify-center gap-2 w-1/3">
                         <button onclick="mudarTamanho(-0.05)" title="Diminuir Placar"
                             class="bg-gray-700 hover:bg-red-600 text-white w-6 h-6 rounded font-black text-sm">-</button>
                         <span id="textoTamanho" class="text-xs text-gray-400 font-bold w-10 text-center">95%</span>
@@ -979,6 +1060,54 @@
                                 </div>
                             </section>
 
+                            <!-- SLIDE 7: Mapa de Finalizações (Shotmap e xG) -->
+                            <section class="h2h-slide">
+                                <div class="theme-bg-dark border theme-border rounded-2xl p-5 w-full">
+                                    <div class="flex justify-between items-center border-b theme-border pb-2 mb-4 px-4">
+                                        <div class="flex flex-col items-start gap-1">
+                                            <div class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Expected Goals (xG)</div>
+                                            <div class="flex items-center gap-2">
+                                                <img id="h2hShotmapLogoCasa" class="w-4 h-4 object-contain">
+                                                <span id="h2hXGCasa" class="text-lg font-black text-white">0.00</span>
+                                            </div>
+                                        </div>
+                                        <h4 class="text-[10px] uppercase tracking-[0.2em] text-gray-500 font-black text-center flex-1">
+                                            <i class="fa-solid fa-futbol theme-text mr-1"></i> Mapa de Finalizações
+                                        </h4>
+                                        <div class="flex flex-col items-end gap-1">
+                                            <div class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Expected Goals (xG)</div>
+                                            <div class="flex items-center gap-2">
+                                                <span id="h2hXGFora" class="text-lg font-black text-white">0.00</span>
+                                                <img id="h2hShotmapLogoFora" class="w-4 h-4 object-contain">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Pitch CSS -->
+                                    <div class="relative w-[600px] h-[380px] mx-auto bg-green-900 border-2 border-white/20 rounded-sm overflow-hidden flex" id="h2hPitchContainer">
+                                        <!-- Gramado stripes -->
+                                        <div class="absolute inset-0 w-full h-full opacity-10 bg-[linear-gradient(90deg,transparent_50%,rgba(0,0,0,0.5)_50%)] bg-[length:10%_100%] pointer-events-none"></div>
+                                        <!-- Meio campo -->
+                                        <div class="absolute top-0 bottom-0 left-1/2 w-0.5 bg-white/30 -translate-x-1/2"></div>
+                                        <div class="absolute top-1/2 left-1/2 w-[80px] h-[80px] border-2 border-white/30 rounded-full -translate-x-1/2 -translate-y-1/2"></div>
+                                        <!-- Área Casa -->
+                                        <div class="absolute top-[20%] left-0 w-[18%] h-[60%] border-2 border-l-0 border-white/30"></div>
+                                        <div class="absolute top-[35%] left-0 w-[6%] h-[30%] border-2 border-l-0 border-white/30"></div>
+                                        <div class="absolute top-[50%] left-[12%] w-[60px] h-[60px] border-2 border-white/30 rounded-full -translate-x-1/2 -translate-y-1/2" style="clip-path: polygon(50% 0, 100% 0, 100% 100%, 50% 100%);"></div>
+                                        <!-- Área Fora -->
+                                        <div class="absolute top-[20%] right-0 w-[18%] h-[60%] border-2 border-r-0 border-white/30"></div>
+                                        <div class="absolute top-[35%] right-0 w-[6%] h-[30%] border-2 border-r-0 border-white/30"></div>
+                                        <div class="absolute top-[50%] right-[12%] w-[60px] h-[60px] border-2 border-white/30 rounded-full translate-x-1/2 -translate-y-1/2" style="clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);"></div>
+                                        <!-- Pontos de chute serão injetados aqui -->
+                                    </div>
+                                    <div class="flex justify-center gap-6 mt-4 opacity-80 scale-90">
+                                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] border border-white/50"></div><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Gols</span></div>
+                                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)] border border-white/50"></div><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">No Alvo / Defesas</span></div>
+                                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] border border-white/50"></div><span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Para fora / Trave</span></div>
+                                    </div>
+                                </div>
+                            </section>
+
                         </div>
                     </div>
                     <button onclick="mudarSlideH2H(1)" class="h2h-nav h2h-nav-right" title="Próximo slide">
@@ -993,6 +1122,7 @@
                     <button onclick="irParaSlideH2H(3)" class="h2h-dot" title="Confrontos Diretos"></button>
                     <button onclick="irParaSlideH2H(4)" class="h2h-dot" title="Artilheiros"></button>
                     <button onclick="irParaSlideH2H(5)" class="h2h-dot" title="Estatísticas"></button>
+                    <button onclick="irParaSlideH2H(6)" class="h2h-dot" title="Mapa de Finalizações"></button>
                 </div>
             </div>
         </div>
@@ -1049,13 +1179,25 @@
 
     <script src="./js/config.js"></script>
     <script src="./js/state.js"></script>
+    <script src="./js/dom-cache.js"></script>
     <script src="./js/api.js"></script>
     <script src="./js/translations.js"></script>
     <script src="./js/utils.js"></script>
     <script src="./js/ui.js"></script>
-    <script src="./js/broadcast.js"></script>
-    <script src="./js/manual.js"></script>
-    <script src="./js/app.js"></script>
+
+    <!-- Broadcast Modules (antiga broadcast.js dividida em módulos) -->
+    <script src="./js/broadcast/cronometro.js"></script>
+    <script src="./js/broadcast/drag.js"></script>
+    <script src="./js/broadcast/notificacoes.js"></script>
+    <script src="./js/broadcast/incidents.js"></script>
+    <script src="./js/broadcast/ticker.js"></script>
+    <script src="./js/broadcast/tabela.js"></script>
+    <script src="./js/broadcast/confrontos.js"></script>
+    <script src="./js/broadcast/h2h.js"></script>
+    <script src="./js/broadcast/index.js"></script>
+
+    <script src="./js/manual.js?v=7"></script>
+    <script src="./js/app.js?v=7"></script>
 </body>
 
 </html>

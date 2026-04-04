@@ -13,7 +13,12 @@ module.exports = async function handler(req, res) {
 
         const data = await response.json();
 
-        res.setHeader("Access-Control-Allow-Origin", "*");
+        // CORS restrito
+        const allowedOrigins = ['https://placarfut.vercel.app', 'http://localhost:8080', 'http://localhost:3000'];
+        const origin = req.headers.origin;
+        if (allowedOrigins.includes(origin)) {
+            res.setHeader("Access-Control-Allow-Origin", origin);
+        }
         res.setHeader("Cache-Control", "s-maxage=120, stale-while-revalidate=60");
         res.status(200).json(data);
 

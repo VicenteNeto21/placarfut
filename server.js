@@ -1,9 +1,15 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 
 const PORT = process.env.PORT || 8080;
+
+// Origens permitidas para CORS
+const ALLOWED_ORIGINS = [
+    'http://localhost:8080',
+    'http://localhost:3000',
+    'http://127.0.0.1:8080'
+];
 
 // Tipos MIME para servir arquivos estáticos
 const MIME_TYPES = {
@@ -17,14 +23,25 @@ const MIME_TYPES = {
     '.ico': 'image/x-icon',
 };
 
-// ========== PROXY SOFASCORE ==========
-async function handleSofaScore(req, res) {
-    const parsed = url.parse(req.url, true);
-    const sofaPath = parsed.query.path;
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
+/**
+ * Helper para definir headers CORS com origem restrita.
+ */
+function setCORSHeaders(req, res) {
+    const origin = req.headers.origin;
+    // Em dev local (sem origin), libera. Em produção, valida.
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+}
+
+// ========== PROXY SOFASCORE ==========
+async function handleSofaScore(req, res) {
+    const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+    const sofaPath = reqUrl.searchParams.get('path');
+
+    setCORSHeaders(req, res);
 
     if (req.method === 'OPTIONS') {
         res.writeHead(200);
@@ -77,10 +94,10 @@ async function handleSofaScore(req, res) {
 
 // ========== PROXY ESPN ==========
 async function handleESPN(req, res) {
-    const parsed = url.parse(req.url, true);
-    const liga = parsed.query.liga || 'bra.1';
+    const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+    const liga = reqUrl.searchParams.get('liga') || 'bra.1';
 
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    setCORSHeaders(req, res);
 
     try {
         const espnUrl = `https://site.api.espn.com/apis/site/v2/sports/soccer/${liga}/scoreboard`;
@@ -103,8 +120,8 @@ async function handleESPN(req, res) {
 
 // ========== SERVIR ARQUIVOS ESTÁTICOS ==========
 function serveStatic(req, res) {
-    const parsed = url.parse(req.url, true);
-    let filePath = path.join(__dirname, parsed.pathname === '/' ? 'index.html' : parsed.pathname);
+    const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
+    let filePath = path.join(__dirname, reqUrl.pathname === '/' ? 'index.html' : reqUrl.pathname);
     const ext = path.extname(filePath).toLowerCase();
     const contentType = MIME_TYPES[ext] || 'application/octet-stream';
 
@@ -126,13 +143,13 @@ function serveStatic(req, res) {
 
 // ========== SERVIDOR HTTP ==========
 const server = http.createServer((req, res) => {
-    const parsed = url.parse(req.url, true);
+    const reqUrl = new URL(req.url, `http://localhost:${PORT}`);
 
     // Rotas de API
-    if (parsed.pathname === '/api/sofascore') {
+    if (reqUrl.pathname === '/api/sofascore') {
         return handleSofaScore(req, res);
     }
-    if (parsed.pathname === '/api/espn') {
+    if (reqUrl.pathname === '/api/espn') {
         return handleESPN(req, res);
     }
 

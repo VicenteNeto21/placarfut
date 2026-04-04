@@ -430,8 +430,12 @@ async function atualizarDadosSofaScore() {
         }
 
         if (ultimoPlacar.casa !== -1) {
-            if (golsC > ultimoPlacar.casa) atualizarPlacarComEfeito("tvGolsCasa", null, null, false);
-            if (golsF > ultimoPlacar.fora) atualizarPlacarComEfeito("tvGolsFora", null, null, false);
+            if (golsC > ultimoPlacar.casa) {
+                atualizarPlacarComEfeito("tvGolsCasa", null, null, false);
+            }
+            if (golsF > ultimoPlacar.fora) {
+                atualizarPlacarComEfeito("tvGolsFora", null, null, false);
+            }
         }
         document.getElementById("tvGolsCasa").innerHTML = golsC;
         document.getElementById("tvGolsFora").innerHTML = golsF;
@@ -541,13 +545,6 @@ async function buscarIncidentesSofaScore(eventId, isLive = true) {
                         const sOut = inc.playerOut?.shortName || inc.playerOut?.name;
                         if (sIn && sOut) {
                             mostrarNotificacaoSubstituicao(sIn, sOut, inc.isHome);
-                        }
-                    }
-                    else if (inc.incidentType === 'goal') {
-                        const pName = inc.player?.name || inc.playerName;
-                        if (pName) {
-                            const tName = inc.isHome ? (currentEventData?.homeTeam?.name || 'CASA') : (currentEventData?.awayTeam?.name || 'FORA');
-                            atualizarPlacarComEfeito(inc.isHome ? "tvGolsCasa" : "tvGolsFora", pName.toUpperCase(), tName.toUpperCase(), true);
                         }
                     }
                     else if (inc.incidentType === 'card') {
@@ -1411,6 +1408,108 @@ async function carregarH2H() {
     if (nomeCasaEl) nomeCasaEl.innerText = ' — ' + (document.getElementById("tvNomeCasa")?.innerText || 'CASA');
     if (nomeForaEl) nomeForaEl.innerText = ' — ' + (document.getElementById("tvNomeFora")?.innerText || 'FORA');
 
+    // Carrega Shotmap e xG (Slide 7)
+    const carregarShotmap = async () => {
+        const pitchEl = document.getElementById("h2hPitchContainer");
+        const xGCasaEl = document.getElementById("h2hXGCasa");
+        const xGForaEl = document.getElementById("h2hXGFora");
+        
+        if (!pitchEl || !currentEventData?.id) return;
+        
+        document.getElementById("h2hShotmapLogoCasa").src = `${BACKEND_URL}?path=team/${currentHomeTeamId}/image`;
+        document.getElementById("h2hShotmapLogoFora").src = `${BACKEND_URL}?path=team/${currentAwayTeamId}/image`;
+
+        try {
+            const data = await fetchSofaScore(`event/${currentEventData.id}/shotmap`);
+            const shots = data?.shotmap || [];
+            
+            // Limpa as bolinhas anteriores
+            const dots = pitchEl.querySelectorAll('.shot-dot');
+            dots.forEach(d => d.remove());
+
+            if (shots.length === 0) {
+                // Ocultar os labels se não houver shots ou mapa vazio
+                xGCasaEl.innerText = "N/D";
+                xGForaEl.innerText = "N/D";
+                pitchEl.innerHTML += `<div class="shot-dot absolute inset-0 flex items-center justify-center text-white/50 font-bold uppercase tracking-widest text-xs z-20">Mapa de Finalizações não disponível para este jogo</div>`;
+                return;
+            }
+
+            let acumuladoCasa = 0;
+            let acumuladoFora = 0;
+
+            shots.forEach(shot => {
+                const isHome = shot.isHome;
+                const xg = shot.xg || 0;
+                
+                if (isHome) acumuladoCasa += xg;
+                else acumuladoFora += xg;
+
+                const tipo = shot.incidentType; 
+                // 'goal', 'saved', 'missed', 'shotOffTarget', 'shotOnTarget', 'hitWoodwork'
+                
+                let bgColor = 'bg-gray-400';
+                let shadow = '';
+                if (tipo === 'goal') {
+                    bgColor = 'bg-emerald-500 border border-white pulse-goal';
+                    shadow = 'shadow-[0_0_10px_rgba(16,185,129,0.9)]';
+                } else if (tipo === 'shotOnTarget' || tipo === 'saved') {
+                    bgColor = 'bg-blue-500 border border-white/50';
+                    shadow = 'shadow-[0_0_8px_rgba(59,130,246,0.7)]';
+                } else {
+                    // missed, hitWoodwork, shotOffTarget, block
+                    bgColor = 'bg-red-500 border border-white/50 opacity-80';
+                    shadow = 'shadow-[0_0_8px_rgba(239,68,68,0.7)]';
+                }
+
+                // Tamanho visual escalado pelo xG (Mínimo 6px, Máximo 20px)
+                const sizePx = Math.max(6, Math.min(20, Math.round(xg * 30 + 6)));
+                
+                // Coordenadas da SofaScore
+                // O X e Y vem em grid 100x100
+                const px = shot.playerCoordinates.x;
+                const py = shot.playerCoordinates.y;
+                let leftPct = px;
+                let topPct = py;
+
+                // Ajuste de lado de campo
+                // Padrão do SofaScore: Todos os 'x' e 'y' são absolutos do campo (como se um time sempre atacasse da direita pra esq ou vice-versa no 1T).
+                // Alternativamente: Todos os shots vêm relativos à direção de ataque de quem chutou.
+                // Na AP SofaScore xG, normalmente x=0 é a própria linha de fundo, ou x=100 é o gol adversário (para ambos os times, mapeado relativo). 
+                // Assumindo: X=100 é o gol em que estão chutando, e Y=50 é o meio do gol.
+                // Plotamos Home chutando da Direita para Esquerda (X=100 fica na Esquerda, ou seja, left = 100-x)
+                if (isHome) {
+                    leftPct = px; // time da casa ataca gol na esquerda (assumindo X menor perto do gol num shotmap normal ou vice versa, vamos fixar)
+                    // Na verdade na API x=0 é a zaga e x=100 é o ataque. Se a casa ataca da DIR pra ESQ, X=100 vira left=0.
+                    leftPct = 100 - px;
+                } else {
+                    // Time de fora ataca da ESQ pra DIR. X=100 vira left=100.
+                    leftPct = px;
+                }
+
+                const dotHtml = `
+                    <div class="shot-dot absolute rounded-full ${bgColor} ${shadow}" 
+                         style="width: ${sizePx}px; height: ${sizePx}px; left: ${leftPct}%; top: ${topPct}%; transform: translate(-50%, -50%); transition: all 0.5s ease; z-index: ${tipo === 'goal'? 10 : 5}">
+                    </div>
+                `;
+                pitchEl.insertAdjacentHTML('beforeend', dotHtml);
+            });
+
+            // Atualizar os labels do xG
+            xGCasaEl.innerText = acumuladoCasa.toFixed(2);
+            xGForaEl.innerText = acumuladoFora.toFixed(2);
+            
+            // Adiciono um style para pulse no head se não existir
+            if (!document.getElementById("pulseGoalStyle")) {
+                document.head.insertAdjacentHTML('beforeend', `<style id="pulseGoalStyle">@keyframes pulseGoalAnim { 0% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.4); } 100% { transform: translate(-50%, -50%) scale(1); } } .pulse-goal { animation: pulseGoalAnim 1.5s infinite; }</style>`);
+            }
+            
+        } catch(e) {
+            console.error("Erro no shotmap:", e);
+            pitchEl.innerHTML += `<div class="shot-dot absolute inset-0 flex items-center justify-center text-white/50 font-bold uppercase tracking-widest text-xs z-20">Sem dados xG neste torneio</div>`;
+        }
+    };
+
     // Carrega confrontos diretos (Slide 4)
     const carregarConfrontosDiretos = async () => {
         const listEl = document.getElementById("h2hDirectList");
@@ -1627,6 +1726,7 @@ async function carregarH2H() {
         carregarConfrontosDiretos(),
         carregarArtilheiros(),
         carregarEstatisticasH2H(),
+        carregarShotmap(),
     ]);
     irParaSlideH2H(0);
     iniciarSlidesH2H();

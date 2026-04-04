@@ -2,6 +2,10 @@
 // Inicialização do Aplicativo PlacarFut
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Inicializar cache DOM e error boundary
+    cacheDOM();
+    instalarErrorBoundary();
+    
     // Liga o arrastador do placar e da tabela do OBS
     inicializarArrastador();
     inicializarArrastadorTabela();

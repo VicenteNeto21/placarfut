@@ -1,6 +1,10 @@
 module.exports = async function handler(req, res) {
-    // Configuração de CORS – permite qualquer origem (ajuste para produção)
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS restrito — ajuste o domínio para o seu deploy Vercel
+    const allowedOrigins = ['https://placarfut.vercel.app', 'http://localhost:8080', 'http://localhost:3000'];
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

@@ -42,5 +42,37 @@ O SofaScore possui um recurso famoso chamado *Attack Momentum* que mede qual tim
 
 ---
 
+## 🔥 **[NOVO] Mais Possibilidades com a API SofaScore**
+
+## 8. 📊 Gráfico de Probabilidade de Vitória (Win Probability)
+A API avalia em tempo real, baseada nas odds e andamento do jogo, qual a chance de cada time vencer.
+- **Endpoint:** `event/{id}/win-probability`
+- **Uso no OBS:** Uma barra preenchível (ex: 60% Azul, 40% Vermelho) que flutua durante o jogo, balançando de um lado para o outro conforme gols e minutos vão alterando a matemática do favoritismo.
+
+## 9. 🎙️ Lance a Lance Automático (Text Commentary)
+O SofaScore possui comentários em texto minuto a minuto da partida. 
+- **Endpoint:** `event/{id}/comments` (ou incidentes detalhados)
+- **Uso no OBS:** Uma coluna lateral estilo "Twitter" ou um rodapé tipo notícia local que rola informações cruciais textuais (ex: *"24' O chute de fora da área passou raspando a trave!"*) sem precisar de locutor.
+
+## 10. 🏥 Desfalques e Lesionados (Missing Players)
+Geralmente exposto dentro dos dados de `lineups` ou detalhes da partida (como a famigerada "Cruz Vermelha" nas listas).
+- **Uso no OBS:** Antes de começar o jogo, chamar na tela um painel "Quem está fora", mostrando de imediato os craques suspensos ou machucados que não foram para o jogo hoje.
+
+## 11. 🧠 Curiosidades e Tabus (Match Insights)
+O SofaScore fornece um endpoint inteiro dedicado a gerar automaticamente frases de contexto (ex: *"Time A não perde do Time B há 8 jogos"*, ou *"Time C sofre gols primeiro há 5 rodadas seguidas"*).
+- **Endpoint:** `event/{id}/h2h/events` (geralmente sob a tag de *insights* ou *streaks*)
+- **Uso no OBS:** Um popup ("Você Sabia?") minimalista que surge na tela em momentos de pouca ação no jogo.
+
+## 12. 📍 Posição Média Real (Heatmap de Posição Média)
+Diferente da tática do papel (o "4-3-3" planejado antes do jogo), o SofaScore gera também o *Average Positions*, calculando o GPS médio real em campo.
+- **Endpoint:** `event/{id}/average-positions`
+- **Uso no OBS:** Ideal para ser mostrado no Intervalo (Half-time), comparando a "Prancheta Desejada" vs a "Onde os jogadores de fato estão jogando".
+
+## 13. 🎲 Roleta de Pênaltis Imersiva (Penalty Shootout Screen)
+Temos as "bolinhas" de pênalti no placar hoje, mas a API informa *quem* bateu, *se converteu*, e o *placar* em arrays dedicados.
+- **Uso no OBS:** Nos torneios mata-mata (Série C, D, ou Copas), quando for pros Pênaltis, uma tela cheia 100% de overlay escuro, revelando lado a lado as fotos dos goleiros e o rosto de cada jogador que vai pra bola com a indicação ❌ ou ✅ gigante.
+
+---
+
 ### Quer implementar alguma dessas lógicas?
 Os sistemas de overlay do PlacarFut reagem à DOM, portanto, se você se interessar por uma ou mais funcionalidades acima (ex: **Fotos de jogadores para os Gols** ou **Gráfico de Momentum**), podemos montar os designs no Tailwind e mapear imediatamente no `broadcast.js`.
