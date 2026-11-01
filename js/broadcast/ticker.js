@@ -121,9 +121,10 @@ async function atualizarRodapeSofaScore() {
 
                 if (nomeCompeticaoTicker !== currentTournamentName) {
                     tickerHTML += `
-                        <div class="ticker-item !border-none !px-4 ml-8" data-tournament="${escapeHTML(nomeCompeticaoTicker)}" data-logo="${logoTorneio}">
-                            <div class="bg-gray-800 text-white font-black uppercase tracking-widest px-5 py-1.5 rounded-full shadow-lg flex items-center gap-2 border border-gray-600">
-                                <img src="${logoTorneio}" class="w-4 h-4 object-contain brightness-200" onerror="this.style.display='none'"> ${escapeHTML(nomeCompeticaoTicker)}
+                        <div class="ticker-item !border-none !px-3 ml-4" data-tournament="${escapeHTML(nomeCompeticaoTicker)}" data-logo="${logoTorneio}">
+                            <div class="bg-white/10 text-white font-extrabold uppercase tracking-wider text-[11px] px-3.5 py-1 rounded-md shadow-sm flex items-center gap-2 border border-white/15">
+                                <img src="${logoTorneio}" class="w-4 h-4 object-contain brightness-125" onerror="this.style.display='none'">
+                                <span>${escapeHTML(nomeCompeticaoTicker)}</span>
                             </div>
                         </div>
                     `;
@@ -135,16 +136,22 @@ async function atualizarRodapeSofaScore() {
 
                 tickerHTML += `
                     <div class="ticker-item" data-tournament="${escapeHTML(nomeCompeticaoTicker)}" data-logo="${logoTorneio}">
-                        <span class="ticker-status ${isLive ? 'text-sky-400' : 'text-gray-400'} mr-2">[${tempoStr}]</span>
-                        <img src="${logoHome}" onerror="this.style.display='none'" class="h-5 mr-2 object-contain rounded">
-                        ${homeTeamName}${rcC}
+                        <span class="ticker-status ${isLive ? 'text-emerald-400 font-black' : 'text-gray-400 font-bold'} mr-2.5 px-2 py-0.5 bg-white/5 rounded text-[11px] tracking-wide">${tempoStr}</span>
+                        <div class="w-5 h-5 rounded-full bg-white/10 p-0.5 inline-flex items-center justify-center mr-1.5 overflow-hidden flex-shrink-0 shadow-sm">
+                            <img src="${logoHome}" onerror="this.style.display='none'" class="w-full h-full object-contain">
+                        </div>
+                        <span class="font-bold mr-1 text-white uppercase text-xs sm:text-sm tracking-tight">${homeTeamName}</span>${rcC}
                         ${extraPenC}
-                        <span class="text-white font-black mx-1">${currentHome}</span>
-                        <span class="text-gray-400">vs</span>
-                        <span class="text-white font-black mx-1">${currentAway}</span>
+                        <div class="inline-flex items-center gap-1 bg-black/60 border border-white/15 px-2 py-0.5 rounded text-white font-black mx-1.5 tabular-nums text-xs shadow-inner">
+                            <span>${currentHome}</span>
+                            <span class="text-white/30 text-[10px] font-light">x</span>
+                            <span>${currentAway}</span>
+                        </div>
                         ${extraPenF}
-                        ${rcF}${awayTeamName}
-                        <img src="${logoAway}" onerror="this.style.display='none'" class="h-5 ml-2 object-contain rounded">
+                        ${rcF}<span class="font-bold ml-1 text-white uppercase text-xs sm:text-sm tracking-tight">${awayTeamName}</span>
+                        <div class="w-5 h-5 rounded-full bg-white/10 p-0.5 inline-flex items-center justify-center ml-1.5 overflow-hidden flex-shrink-0 shadow-sm">
+                            <img src="${logoAway}" onerror="this.style.display='none'" class="w-full h-full object-contain">
+                        </div>
                         ${extraAgr}
                     </div>
                 `;
@@ -186,22 +193,66 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
     const container = document.getElementById("tvTickerContainer");
     if (!overlay || !textEl) return;
 
-    const siglaCasa = (timeCasa.shortName || timeCasa.name).substring(0, 3).toUpperCase();
-    const siglaFora = (timeFora.shortName || timeFora.name).substring(0, 3).toUpperCase();
+    const nomeCasa = (typeof getScoreboardName === 'function' ? getScoreboardName(timeCasa) : (timeCasa.shortName || timeCasa.name)).toUpperCase();
+    const nomeFora = (typeof getScoreboardName === 'function' ? getScoreboardName(timeFora) : (timeFora.shortName || timeFora.name)).toUpperCase();
+    const nomeGol = (typeof traduzirNomeEquipe === 'function' ? traduzirNomeEquipe(timeGolNome) : timeGolNome).toUpperCase();
 
-    const logoC = timeCasa._espnLogo || sofaImg(`team/${timeCasa.id}/image`);
-    const logoF = timeFora._espnLogo || sofaImg(`team/${timeFora.id}/image`);
+    const logoC = timeCasa.logo || timeCasa._espnLogo || sofaImg(`team/${timeCasa.id}/image`);
+    const logoF = timeFora.logo || timeFora._espnLogo || sofaImg(`team/${timeFora.id}/image`);
+
+    const isGolCasa = nomeGol.includes(nomeCasa) || nomeCasa.includes(nomeGol);
+    const isGolFora = nomeGol.includes(nomeFora) || nomeFora.includes(nomeGol);
 
     textEl.innerHTML = `
-        <span class="bg-gray-800 border border-gray-600 text-white px-3 py-0.5 rounded-full text-[10px] uppercase tracking-widest shadow-md mr-4 flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gray-400"></i> ${escapeHTML(torneioNome)}</span>
-        <span class="text-sky-400 italic mr-5 flex items-center gap-2"><i class="fa-solid fa-futbol animate-bounce"></i> GOL DO ${escapeHTML(timeGolNome.toUpperCase())}!</span>
-        <img src="${logoC}" class="h-6 mx-2 object-contain drop-shadow-md" onerror="this.style.display='none'">
-        <span class="font-normal mx-1">${escapeHTML(siglaCasa)}</span> 
-        <span class="text-white font-black mx-1">${golsC}</span> 
-        <span class="text-gray-500 font-normal text-sm mx-1">x</span> 
-        <span class="text-white font-black mx-1">${golsF}</span> 
-        <span class="font-normal mx-1">${escapeHTML(siglaFora)}</span>
-        <img src="${logoF}" class="h-6 mx-2 object-contain drop-shadow-md" onerror="this.style.display='none'">
+        <div class="flex items-center justify-center gap-3 sm:gap-5 w-full h-full text-white">
+            <!-- BADGE PULSANTE DE GOL -->
+            <div class="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-[1000] text-xs uppercase tracking-widest px-3 py-1 rounded shadow-[0_0_15px_rgba(16,185,129,0.5)] flex-shrink-0 animate-pulse">
+                <i class="fa-solid fa-futbol text-white"></i>
+                <span>GOL!</span>
+            </div>
+
+            <!-- BADGE DA COMPETIÇÃO -->
+            <div class="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1 rounded text-[11px] font-bold text-white/90 uppercase tracking-wider flex-shrink-0">
+                <i class="fa-solid fa-trophy text-amber-400 text-[10px]"></i>
+                <span>${escapeHTML(torneioNome)}</span>
+            </div>
+
+            <div class="h-5 w-px bg-white/20 hidden sm:block"></div>
+
+            <!-- DESTAQUE DO TIME QUE MARCOU -->
+            <div class="flex items-center gap-1.5 font-extrabold text-xs sm:text-sm uppercase tracking-wider text-emerald-400 flex-shrink-0">
+                <i class="fa-solid fa-circle-arrow-up text-xs"></i>
+                <span>GOL DO ${escapeHTML(nomeGol)}</span>
+            </div>
+
+            <div class="h-5 w-px bg-white/20 hidden sm:block"></div>
+
+            <!-- MATCHUP & PLACAR TELEVISIVO -->
+            <div class="flex items-center gap-2.5 flex-shrink-0">
+                <!-- TIME CASA -->
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-xs sm:text-sm tracking-tight text-white uppercase">${escapeHTML(nomeCasa)}</span>
+                    <div class="w-6 h-6 rounded-full bg-white/10 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                        <img src="${logoC}" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+                <!-- CÁPSULA DO PLACAR -->
+                <div class="flex items-center gap-1.5 bg-black/60 border border-white/20 px-2.5 py-0.5 rounded font-black text-sm sm:text-base text-white tabular-nums shadow-inner">
+                    <span class="${isGolCasa ? 'text-emerald-400 font-[1000]' : ''}">${golsC}</span>
+                    <span class="text-white/40 text-xs font-normal">x</span>
+                    <span class="${isGolFora ? 'text-emerald-400 font-[1000]' : ''}">${golsF}</span>
+                </div>
+
+                <!-- TIME FORA -->
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-white/10 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
+                        <img src="${logoF}" class="w-full h-full object-contain" onerror="this.style.display='none'">
+                    </div>
+                    <span class="font-bold text-xs sm:text-sm tracking-tight text-white uppercase">${escapeHTML(nomeFora)}</span>
+                </div>
+            </div>
+        </div>
     `;
 
     if (torneioNome.toUpperCase().includes("NORDESTE")) {
