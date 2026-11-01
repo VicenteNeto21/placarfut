@@ -1,3 +1,22 @@
+
+// Gestão do Dropdown de Testes na Barra de Transmissão
+function toggleMenuTestes(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('menuTestesDropdown');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+function fecharMenuTestes() {
+    const menu = document.getElementById('menuTestesDropdown');
+    if (menu) menu.classList.add('hidden');
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#dropdownTestesContainer')) {
+        fecharMenuTestes();
+    }
+});
+
 // Lógica de Tela Cheia e Transmissão para OBS (SofaScore Auto)
 
 function iniciarTransmissaoSofaScore(id) {
@@ -191,6 +210,7 @@ function aplicarTemaPlacar(tornId) {
     let isCopa = false;
     let isNordeste2025 = false;
     let isSerieD = false;
+    let isSerieC = false;
     let temaClass = "";
 
     if (tornId === 384) { temaClass = "theme-libertadores"; isCopa = true; }
@@ -201,7 +221,9 @@ function aplicarTemaPlacar(tornId) {
     else if (tornId === 13076 || tornId === 10257) { temaClass = "theme-feminino"; isCopa = true; }
     else if (tornId === 16 || tornId === 482 || tornId === 704 || tornId === 712 || tornId === 1406 || tornId === 1045 || tornId === 10618 || tornId === 11) { temaClass = "theme-fifa2026"; isCopa = true; }
 
-    else if (tornId === 10326) { temaClass = "theme-serieD"; isSerieD = true; } // Adicionado tema para Serie D
+    else if (tornId === 10326) { temaClass = "theme-serieD"; isSerieD = true; } 
+    else if (tornId === 1281) { temaClass = "theme-serieC"; isSerieC = true; } // Adicionado tema Série C (Nordestina)
+
     if (temaClass) {
         placar.classList.add(temaClass);
         if (h2hCard) h2hCard.classList.add(temaClass);
@@ -222,7 +244,7 @@ function aplicarTemaPlacar(tornId) {
             h2hCard.classList.remove("rounded-[2rem]");
             h2hCard.classList.add("layout-seried");
         }
-    } else if (isCopa) {
+    } else if (isCopa || isSerieC) {
         placar.classList.remove("rounded-xl");
         placar.classList.add("layout-copa");
         if (h2hCard) {
@@ -230,13 +252,14 @@ function aplicarTemaPlacar(tornId) {
             h2hCard.classList.add("layout-copa");
         }
     }
+
 }
 
 async function atualizarDadosSofaScore() {
     if (!jogoSelecionadoId) return;
 
     try {
-        const eventData = await fetchSofaScore(`event/${jogoSelecionadoId}`);
+        const eventData = await fetchWithFallback(`event/${jogoSelecionadoId}`);
         const jogo = eventData.event;
         currentEventData = jogo;
         
@@ -245,7 +268,7 @@ async function atualizarDadosSofaScore() {
         if (!currentSeasonId && currentTournamentId) {
             // Tenta buscar a season atual se não vier no evento (raro)
             try {
-                const tourData = await fetchSofaScore(`unique-tournament/${currentTournamentId}/seasons`);
+                const tourData = await fetchWithFallback(`unique-tournament/${currentTournamentId}/seasons`);
                 if (tourData.seasons && tourData.seasons.length > 0) {
                     currentSeasonId = tourData.seasons[0].id;
                 }
@@ -293,7 +316,7 @@ async function atualizarDadosSofaScore() {
                 elLogoComp.src = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:210&quality=75";
                 elLogoComp.classList.remove("hidden");
             } else if (currentTournamentId === 1596 || currentTournamentId === 11620) {
-                elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/${currentTournamentId}/image`;
+                elLogoComp.src = sofaImg(`unique-tournament/${currentTournamentId}/image`);
                 elLogoComp.classList.remove("hidden");
             } else {
                 elLogoComp.classList.add("hidden");
@@ -317,8 +340,8 @@ async function atualizarDadosSofaScore() {
         
         if (nomeForaFull.length > 10) elNomeFora.style.fontSize = "1.2rem";
         else elNomeFora.style.fontSize = "";
-        document.getElementById("imgLogoCasa").src = `${BACKEND_URL}?path=team/${jogo.homeTeam.id}/image`;
-        document.getElementById("imgLogoFora").src = `${BACKEND_URL}?path=team/${jogo.awayTeam.id}/image`;
+        document.getElementById("imgLogoCasa").src = jogo.homeTeam.logo || jogo.homeTeam._espnLogo || sofaImg(`team/${jogo.homeTeam.id}/image`);
+        document.getElementById("imgLogoFora").src = jogo.awayTeam.logo || jogo.awayTeam._espnLogo || sofaImg(`team/${jogo.awayTeam.id}/image`);
 
         teamColorCasa = jogo.homeTeam.teamColors?.primary || '#3b82f6';
         teamColorFora = jogo.awayTeam.teamColors?.primary || '#ef4444';
@@ -478,7 +501,7 @@ async function buscarIncidentesSofaScore(eventId, isLive = true) {
     if (!scorersCasa || !scorersFora || !scorersBar) return;
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/incidents`);
+        const data = await fetchWithFallback(`event/${eventId}/incidents`);
         if (!data || !data.incidents) {
             scorersCasa.innerHTML = '';
             scorersFora.innerHTML = '';
@@ -490,19 +513,16 @@ async function buscarIncidentesSofaScore(eventId, isLive = true) {
             return;
         }
 
-        // Auto-detect VAR (Apenas se o jogo estiver AO VIVO)
-        const varOverlay = document.getElementById("tvVAROverlay");
-        if (varOverlay) {
-            const hasActiveVAR = isLive && data.incidents.some(inc => inc.incidentType === 'varDecision' && !inc.confirmed);
-            if (hasActiveVAR) {
-                varOverlay.classList.remove("hidden");
-            } else {
-                // Se não houver VAR ativo agora ou o jogo acabou, ocultamos
-                // Mas não ocultamos se o VAR foi ativado manualmente e o banner ainda deve aparecer?
-                // O VAR automático só deve "ativar". Se o usuário quer esconder, ele desativa.
-                varOverlay.classList.add("hidden");
-            }
-        }
+        // Auto-detect VAR desativado temporariamente
+        // const varOverlay = document.getElementById("tvVAROverlay");
+        // if (varOverlay) {
+        //     const hasActiveVAR = data?.incidents?.some(inc => inc.incidentType === 'varDecision' && !inc.confirmed);
+        //     if (isLive && hasActiveVAR) {
+        //         varOverlay.classList.remove("hidden");
+        //     } else if (!isVARActive) {
+        //         varOverlay.classList.add("hidden");
+        //     }
+        // }
 
         const goleiros = { casa: [], fora: [] };
         let ycC = 0, ycF = 0;
@@ -641,7 +661,7 @@ async function buscarEstatisticas(eventId) {
     if (!statsBar) return;
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/statistics`);
+        const data = await fetchWithFallback(`event/${eventId}/statistics`);
         if (!data.statistics || data.statistics.length === 0) {
             statsBar.classList.add('hidden');
             return;
@@ -727,7 +747,7 @@ async function buscarMelhorEmCampo(eventId) {
     }
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/lineups`);
+        const data = await fetchWithFallback(`event/${eventId}/lineups`);
         if (!data || !data.home || !data.away) return;
 
         let bestPlayer = null;
@@ -777,7 +797,7 @@ function exibirJogadorDestaque(player) {
     if (!card || !mainScore || !img || !name || !ratingEl) return;
 
     // Configura os dados do jogador
-    img.src = `${BACKEND_URL}?path=player/${player.id}/image`;
+    img.src = sofaImg(`player/${player.id}/image`);
     name.innerText = player.name;
     ratingEl.innerText = player.rating.toFixed(1);
 
@@ -834,8 +854,8 @@ async function atualizarRodapeSofaScore() {
         
         // Buscar eventos agendados e ao vivo simultaneamente para ter os dados mais rápidos
         const [dataSched, dataLive] = await Promise.all([
-            fetchSofaScore(`sport/football/scheduled-events/${dataHoje}`),
-            fetchSofaScore('sport/football/events/live').catch(() => ({ events: [] }))
+            fetchWithFallback(`sport/football/scheduled-events/${dataHoje}`),
+            fetchWithFallback('sport/football/events/live').catch(() => ({ events: [] }))
         ]);
         
         let tickerHTML = "";
@@ -952,7 +972,7 @@ async function atualizarRodapeSofaScore() {
                     for(let i=0; i<j.awayRedCards; i++) rcF += `<span class="bg-red-600 w-1.5 h-2.5 inline-block rounded-[1px] mr-1 shadow-[0_0_2px_rgba(220,38,38,0.8)]"></span>`;
                 }
 
-                const logoTorneio = `${BACKEND_URL}?path=unique-tournament/${tornId}/image`;
+                const logoTorneio = sofaImg(`unique-tournament/${tornId}/image`);
 
                 // Cria a "Faixa" flutuante de separação entre campeonatos
                 if (nomeCompeticaoTicker !== currentTournamentName) {
@@ -969,7 +989,7 @@ async function atualizarRodapeSofaScore() {
                 tickerHTML += `
                     <div class="ticker-item" data-tournament="${nomeCompeticaoTicker}" data-logo="${logoTorneio}">
                         <span class="ticker-status ${isLive ? 'text-sky-400' : 'text-gray-400'} mr-2">[${tempoStr}]</span>
-                        <img src="${BACKEND_URL}?path=team/${j.homeTeam.id}/image" class="h-5 mr-2 object-contain rounded">
+                        <img src="${sofaImg(`team/${j.homeTeam.id}/image`)}" class="h-5 mr-2 object-contain rounded">
                         ${traduzirNomeEquipe(j.homeTeam.shortName || j.homeTeam.name)}${rcC}
                         ${extraPenC}
                         <span class="text-white font-black mx-1">${currentHome}</span>
@@ -977,7 +997,7 @@ async function atualizarRodapeSofaScore() {
                         <span class="text-white font-black mx-1">${currentAway}</span>
                         ${extraPenF}
                         ${rcF}${traduzirNomeEquipe(j.awayTeam.shortName || j.awayTeam.name)}
-                        <img src="${BACKEND_URL}?path=team/${j.awayTeam.id}/image" class="h-5 ml-2 object-contain rounded">
+                        <img src="${sofaImg(`team/${j.awayTeam.id}/image`)}" class="h-5 ml-2 object-contain rounded">
                         ${extraAgr}
                     </div>
                 `;
@@ -1023,8 +1043,8 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
     const siglaFora = (timeFora.shortName || timeFora.name).substring(0, 3).toUpperCase();
 
     // Puxando escudos dos times
-    const logoC = `${BACKEND_URL}?path=team/${timeCasa.id}/image`;
-    const logoF = `${BACKEND_URL}?path=team/${timeFora.id}/image`;
+    const logoC = sofaImg(`team/${timeCasa.id}/image`);
+    const logoF = sofaImg(`team/${timeFora.id}/image`);
 
     textEl.innerHTML = `
         <span class="bg-gray-800 border border-gray-600 text-white px-3 py-0.5 rounded-full text-[10px] uppercase tracking-widest shadow-md mr-4 flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gray-400"></i> ${torneioNome}</span>
@@ -1157,7 +1177,7 @@ async function carregarH2H() {
     const tornId = currentEventData?.tournament?.uniqueTournament?.id || currentTournamentId;
     const logoComp = document.getElementById("h2hCompLogo");
     if (tornId) {
-        logoComp.src = `${BACKEND_URL}?path=unique-tournament/${tornId}/image`;
+        logoComp.src = sofaImg(`unique-tournament/${tornId}/image`);
         logoComp.style.display = 'block';
     } else {
         logoComp.style.display = 'none';
@@ -1193,7 +1213,7 @@ async function carregarH2H() {
     
     try {
         // Tentativa de buscar info extras se não vieram no payload principal
-        const mData = await fetchSofaScore(`event/${jogoSelecionadoId}/managers`);
+        const mData = await fetchWithFallback(`event/${jogoSelecionadoId}/managers`);
         if (mData.homeManager?.name) document.getElementById("h2hManagerCasa").innerText = mData.homeManager.name.toUpperCase();
         if (mData.awayManager?.name) document.getElementById("h2hManagerFora").innerText = mData.awayManager.name.toUpperCase();
     } catch(e) {}
@@ -1302,7 +1322,7 @@ async function carregarH2H() {
                 <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         <span class="text-[9px] font-black ${locCorClass} shrink-0">${localizacao}</span>
-                        <img src="${BACKEND_URL}?path=team/${rivalId}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${rivalId}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                         <div class="flex flex-col min-w-0">
                             <span class="text-white font-bold text-xs truncate">${rival}</span>
                             <span class="text-[9px] uppercase tracking-widest text-gray-500 truncate">${comp || data}</span>
@@ -1340,7 +1360,7 @@ async function carregarH2H() {
 
     const carregarFormaTime = async (teamId, containerId) => {
         try {
-            const data = await fetchSofaScore(`team/${teamId}/events/last/0`);
+            const data = await fetchWithFallback(`team/${teamId}/events/last/0`);
             const eventos = data?.events || data?.lastEvents || data?.previousEvents || [];
             const forma = extrairFormaRecente(eventos, teamId);
             renderForm(forma, containerId);
@@ -1360,7 +1380,7 @@ async function carregarH2H() {
             return;
         }
         try {
-            const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
+const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
             if (!data.standings || data.standings.length === 0) throw new Error();
             
             let html = '';
@@ -1381,7 +1401,7 @@ async function carregarH2H() {
                         <div class="flex items-center justify-between theme-bg border theme-border rounded-lg px-4 py-2" style="border-left: 4px solid ${color}">
                             <div class="flex items-center gap-3 w-1/3 min-w-[120px]">
                                 <span class="text-lg font-black text-gray-300 w-6 text-center">${pos}º</span>
-                                <img src="${BACKEND_URL}?path=team/${r.team.id}/image" class="w-6 h-6 object-contain">
+                                <img src="${sofaImg(`team/${r.team.id}/image`)}" class="w-6 h-6 object-contain">
                                 <span class="font-bold text-white truncate text-sm" style="max-width: 90px">${r.team.shortName || r.team.name}</span>
                             </div>
                             <div class="flex items-center justify-between flex-1 px-2 text-center gap-2">
@@ -1416,11 +1436,11 @@ async function carregarH2H() {
         
         if (!pitchEl || !currentEventData?.id) return;
         
-        document.getElementById("h2hShotmapLogoCasa").src = `${BACKEND_URL}?path=team/${currentHomeTeamId}/image`;
-        document.getElementById("h2hShotmapLogoFora").src = `${BACKEND_URL}?path=team/${currentAwayTeamId}/image`;
+        document.getElementById("h2hShotmapLogoCasa").src = sofaImg(`team/${currentHomeTeamId}/image`);
+        document.getElementById("h2hShotmapLogoFora").src = sofaImg(`team/${currentAwayTeamId}/image`);
 
         try {
-            const data = await fetchSofaScore(`event/${currentEventData.id}/shotmap`);
+            const data = await fetchWithFallback(`event/${currentEventData.id}/shotmap`);
             const shots = data?.shotmap || [];
             
             // Limpa as bolinhas anteriores
@@ -1519,7 +1539,7 @@ async function carregarH2H() {
             return;
         }
         try {
-            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/h2h`);
+            const data = await fetchWithFallback(`event/${jogoSelecionadoId}/h2h`);
             const eventos = data?.previousEvents || data?.events || [];
             if (!eventos.length) {
                 listEl.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem confrontos diretos registrados</div>';
@@ -1545,7 +1565,7 @@ async function carregarH2H() {
             if (scoreEl) {
                 scoreEl.innerHTML = `
                     <div class="flex flex-col items-center">
-                        <img src="${BACKEND_URL}?path=team/${currentHomeTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${currentHomeTeamId}/image`)}" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
                         <span class="text-3xl font-black text-emerald-400">${wHome}</span>
                         <span class="text-[10px] text-gray-400 uppercase font-bold">${nomeCasa}</span>
                     </div>
@@ -1555,7 +1575,7 @@ async function carregarH2H() {
                         <span class="text-[10px] text-gray-400 uppercase font-bold">Empates</span>
                     </div>
                     <div class="flex flex-col items-center">
-                        <img src="${BACKEND_URL}?path=team/${currentAwayTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${currentAwayTeamId}/image`)}" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
                         <span class="text-3xl font-black text-blue-400">${wAway}</span>
                         <span class="text-[10px] text-gray-400 uppercase font-bold">${nomeFora}</span>
                     </div>
@@ -1577,7 +1597,7 @@ async function carregarH2H() {
                 return `
                     <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs gap-2">
                         <div class="flex items-center gap-2 w-[35%] min-w-0">
-                            <img src="${BACKEND_URL}?path=team/${cHome?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                            <img src="${sofaImg(`team/${cHome?.id}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                             <span class="${corHome} truncate">${cHome?.shortName || cHome?.name || '?'}</span>
                         </div>
                         <div class="text-center font-black text-base shrink-0">
@@ -1587,7 +1607,7 @@ async function carregarH2H() {
                         </div>
                         <div class="flex items-center gap-2 w-[35%] justify-end min-w-0">
                             <span class="${corAway} truncate text-right">${cAway?.shortName || cAway?.name || '?'}</span>
-                            <img src="${BACKEND_URL}?path=team/${cAway?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                            <img src="${sofaImg(`team/${cAway?.id}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                         </div>
                         <div class="shrink-0 text-right min-w-[60px]">
                             <div class="text-gray-500 text-[9px]">${data}</div>
@@ -1610,7 +1630,7 @@ async function carregarH2H() {
             return;
         }
         try {
-            const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/top-players/scoring`);
+            const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/top-players/scoring`);
             const players = data?.topPlayers || data?.players || [];
             if (!players.length) {
                 el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem dados de artilheiros</div>';
@@ -1628,7 +1648,7 @@ async function carregarH2H() {
                 return `
                     <div class="flex items-center gap-3 rounded-xl border ${isInGame ? 'border-theme-border bg-white/10' : 'border-white/5 bg-black/20'} px-3 py-2">
                         <span class="text-sm shrink-0 w-6 text-center">${medalha}</span>
-                        <img src="${BACKEND_URL}?path=team/${team?.id}/image" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${team?.id}/image`)}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
                                 <span class="text-white font-bold text-sm truncate">${player.shortName || player.name || '?'}</span>
@@ -1651,7 +1671,7 @@ async function carregarH2H() {
         const el = document.getElementById("h2hLiveStats");
         if (!el || !jogoSelecionadoId) return;
         try {
-            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/statistics`);
+            const data = await fetchWithFallback(`event/${jogoSelecionadoId}/statistics`);
             const groups = data?.statistics?.[0]?.groups || data?.statistics || [];
             if (!groups.length) {
                 el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Estatísticas não disponíveis (jogo ainda não começou ou sem dados)</div>';
@@ -1987,88 +2007,8 @@ function toggleTabela() {
     }
 }
 
-function toggleConfrontos() {
-    mostrarConfrontos = !mostrarConfrontos;
-    const painel = document.getElementById("tvPanelConfrontos");
-    const btn = document.getElementById("btnToggleConfrontos");
-    
-    // Fecha o outro painel se aberto
-    if (mostrarConfrontos && mostrarTabela) toggleTabela();
-
-    if (mostrarConfrontos) {
-        painel.classList.remove("oculto");
-        if (btn) btn.classList.replace("bg-gray-900/80", "bg-amber-600");
-        carregarConfrontos();
-    } else {
-        painel.classList.add("oculto");
-        if (btn) btn.classList.replace("bg-amber-600", "bg-gray-900/80");
-    }
-}
-
-async function carregarConfrontos() {
-    const body = document.getElementById("tvConfrontosBody");
-    body.innerHTML = `<div class="flex items-center justify-center p-12 text-gray-500 italic text-sm"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Buscando chaves...</div>`;
-
-    if (!currentTournamentId || !currentSeasonId) {
-        body.innerHTML = `<div class="p-8 text-center text-gray-500">Torneio não identificado para chaves.</div>`;
-        return;
-    }
-
-    try {
-        const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/cuptrees`);
-        if (!data || !data.cuptrees || data.cuptrees.length === 0) {
-            body.innerHTML = `<div class="p-8 text-center text-gray-500">Mata-mata não disponível para este torneio.</div>`;
-            return;
-        }
-
-        document.getElementById("confNomeCamp").innerText = "PLAYOFFS / MATA-MATA";
-
-        // Pega a primeira cuptree (geralmente a principal)
-        const tree = data.cuptrees[0];
-        let html = '<div class="cup-container">';
-        
-        // Organiza por Rounds
-        tree.rounds.forEach(round => {
-            html += `<div class="cup-round">`;
-            html += `<div class="cup-round-title">${round.description || 'Fase'}</div>`;
-            
-            round.blocks.forEach(block => {
-                const home = block.homeTeam;
-                const away = block.awayTeam;
-                const scoreHome = block.homeScore?.display ?? '-';
-                const scoreAway = block.awayScore?.display ?? '-';
-                const winnerId = block.winnerId;
-
-                html += `
-                    <div class="cup-match">
-                        <div class="cup-team ${home?.id === winnerId ? 'winner' : ''}">
-                            <div class="flex items-center gap-2 overflow-hidden">
-                                <img src="${BACKEND_URL}?path=team/${home?.id}/image" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
-                                <span class="cup-team-name">${home?.shortName || home?.name || 'A definir'}</span>
-                            </div>
-                            <span class="cup-score">${scoreHome}</span>
-                        </div>
-                        <div class="cup-team ${away?.id === winnerId ? 'winner' : ''}">
-                            <div class="flex items-center gap-2 overflow-hidden">
-                                <img src="${BACKEND_URL}?path=team/${away?.id}/image" class="w-4 h-4 object-contain" onerror="this.style.display='none'">
-                                <span class="cup-team-name">${away?.shortName || away?.name || 'A definir'}</span>
-                            </div>
-                            <span class="cup-score">${scoreAway}</span>
-                        </div>
-                    </div>
-                `;
-            });
-            html += `</div>`;
-        });
-
-        html += '</div>';
-        body.innerHTML = html;
-        
-    } catch (error) {
-        console.error("Erro ao carregar mata-mata:", error);
-        body.innerHTML = `<div class="p-8 text-center text-red-500">Erro ao carregar dados do mata-mata.</div>`;
-    }
-}
+// Função toggleConfrontos movida para js/broadcast/confrontos.js
+// Função carregarConfrontos movida para js/broadcast/confrontos.js
 
 async function carregarTabela(silencioso = false) {
     const tbody = document.getElementById("tabTabelaBody");
@@ -2078,7 +2018,7 @@ async function carregarTabela(silencioso = false) {
 
     if (!currentSeasonId && currentTournamentId) {
         try {
-            const tourData = await fetchSofaScore(`unique-tournament/${currentTournamentId}/seasons`);
+            const tourData = await fetchWithFallback(`unique-tournament/${currentTournamentId}/seasons`);
             if (tourData && tourData.seasons && tourData.seasons.length > 0) {
                 currentSeasonId = tourData.seasons[0].id;
             } else {
@@ -2095,7 +2035,7 @@ async function carregarTabela(silencioso = false) {
     }
     
     try {
-        const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
+        const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
         if (!data.standings || data.standings.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Tabela não encontrada para esta fase.</td></tr>`;
             return;
@@ -2167,7 +2107,7 @@ async function carregarTabela(silencioso = false) {
                         </td>
                         <td class="py-0.5">
                             <div class="flex items-center gap-1.5">
-                                <img src="${BACKEND_URL}?path=team/${teamId}/image" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">
+                                <img src="${sofaImg(`team/${teamId}/image`)}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">
                                 <span class="truncate max-w-[110px]">${teamName}</span>
                             </div>
                         </td>
@@ -2185,7 +2125,7 @@ async function carregarTabela(silencioso = false) {
         // Não fazer auto-scroll: tabela deve ficar estática no OBS.
         if (scrollTabelaInterval) { clearInterval(scrollTabelaInterval); scrollTabelaInterval = null; }
         if (scrollTabelaTimeout) { clearTimeout(scrollTabelaTimeout); scrollTabelaTimeout = null; }
-        const container = document.querySelector('#tvPanelTabela .overflow-y-auto');
+        const container = document.querySelector('#tvPanelTabela .overflow-hidden');
         if (container) container.scrollTop = 0;
 
     } catch (e) {

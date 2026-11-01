@@ -109,6 +109,10 @@ function cacheDOM() {
     // Confrontos / Mata-mata
     DOM.panelConfrontos = document.getElementById('tvPanelConfrontos');
     DOM.confrontosHandle = document.getElementById('tvConfrontosHandle');
+    DOM.proximosJogosHandle = document.getElementById('tvProximosJogosHandle');
+    DOM.panelProximosJogos = document.getElementById('tvPanelProximosJogos');
+    DOM.proximosJogosBody = document.getElementById('tvProximosJogosBody');
+    DOM.proxNomeCamp = document.getElementById('proxNomeCamp');
     DOM.confrontosBody = document.getElementById('tvConfrontosBody');
     DOM.confNomeCamp = document.getElementById('confNomeCamp');
 
@@ -135,6 +139,17 @@ function cacheDOM() {
     DOM.btnToggleGols = document.getElementById('btnToggleGols');
     DOM.btnToggleTabela = document.getElementById('btnToggleTabela');
     DOM.btnToggleConfrontos = document.getElementById('btnToggleConfrontos');
+    DOM.btnToggleInscritos = document.getElementById('btnToggleInscritos');
+
+    // Painel de Inscritos (independente)
+    DOM.subscribersPanel = document.getElementById('tvSubscribersPanel');
+    DOM.subscribersHandle = document.getElementById('tvSubscribersHandle');
+    DOM.subscribersCount = document.getElementById('tvSubscribersCount');
+
+    // Meta de Likes
+    DOM.likesCount = document.getElementById('tvLikesCount');
+    DOM.likesBar = document.getElementById('tvLikesBar');
+    DOM.likesCelebration = document.getElementById('tvLikesCelebration');
 }
 
 /**

@@ -31,6 +31,26 @@ function mudarAba(aba) {
     }
 }
 
+function toggleGiro() {
+    giroAtivo = !giroAtivo;
+    localStorage.setItem('futlive_giro_ativo', JSON.stringify(giroAtivo));
+    renderizarBotaoGiro();
+    
+    // Notifica o broadcast
+    if (typeof aplicarEstadoGiro === 'function') {
+        aplicarEstadoGiro();
+    }
+}
+
+function renderizarBotaoGiro() {
+    const btn = document.getElementById("btnToggleGiro");
+    const text = document.getElementById("btnGiroText");
+    if (!btn || !text) return;
+
+    btn.setAttribute("aria-pressed", String(giroAtivo));
+    text.innerText = giroAtivo ? "Giro: ON" : "Giro: OFF";
+}
+
 // Navegação de Datas
 function atualizarLabelData() {
     const { dateObj } = getDataComOffset(offsetDias);
@@ -275,7 +295,7 @@ async function adicionarTorneioPorIdManual() {
     btn.disabled = true;
 
     try {
-        const data = await fetchSofaScore(`unique-tournament/${id}`);
+        const data = await fetchWithFallback(`unique-tournament/${id}`);
         const nomeApi = data.uniqueTournament?.name || `Torneio ID ${id}`;
         const nome = nomeCampeonatoExibicao(id, nomeApi, nomeApi).toUpperCase();
 
@@ -321,7 +341,7 @@ async function buscarPartidaPorIdManual() {
     btn.disabled = true;
 
     try {
-        const data = await fetchSofaScore(`event/${id}`);
+        const data = await fetchWithFallback(`event/${id}`);
         if (!data || !data.event) throw new Error("Partida não encontrada ou ID inválido.");
         
         const jogo = data.event;
@@ -372,19 +392,19 @@ function formatarHoraStatus(timestamp) {
 
 function renderizarStatusOperacional() {
     const healthEl = document.getElementById('systemHealth');
+    const dotEl = document.getElementById('systemHealthDot');
     const lastEl = document.getElementById('lastUpdateDisplay');
     const sourceEl = document.getElementById('dataSourceDisplay');
     const errorPanel = document.getElementById('systemErrorPanel');
     const errorMsg = document.getElementById('systemErrorMessage');
+    const estado = { ok: 'is-ok', warn: 'is-warn', error: 'is-error' }[ultimoStatusSistema.tipo] || '';
 
     if (healthEl) {
         healthEl.textContent = ultimoStatusSistema.mensagem || 'Aguardando';
-        healthEl.className = 'status-card-value';
-        if (ultimoStatusSistema.tipo === 'ok') healthEl.classList.add('text-emerald-300');
-        else if (ultimoStatusSistema.tipo === 'warn') healthEl.classList.add('text-amber-300');
-        else if (ultimoStatusSistema.tipo === 'error') healthEl.classList.add('text-red-300');
-        else healthEl.classList.add('text-gray-200');
+        healthEl.title = ultimoStatusSistema.mensagem || '';
+        healthEl.className = `telemetry-value ${estado}`.trim();
     }
+    if (dotEl) dotEl.className = `telemetry-dot ${estado}`.trim();
 
     if (lastEl) lastEl.textContent = formatarHoraStatus(ultimoStatusSistema.atualizadoEm);
     if (sourceEl) sourceEl.textContent = ultimoStatusSistema.origem || 'Sem carga';
@@ -398,6 +418,148 @@ function renderizarStatusOperacional() {
         }
     }
 }
+
+// ========== SELETOR DE PROVEDOR ==========
+const OPCOES_PROVEDOR = [
+    { id: 'auto', nome: 'Automático', detalhe: 'Flashscore → ESPN → SofaScore' },
+    { id: 'flashscore', nome: 'Flashscore', detalhe: 'Cobertura ampla, sem captcha' },
+    { id: 'espn', nome: 'ESPN', detalhe: 'Principais ligas' },
+    { id: 'sofascore', nome: 'SofaScore', detalhe: 'Pode estar bloqueado (403)' }
+];
+const ROTULO_ESTADO_PROVEDOR = { ok: 'Online', fail: 'Falhou', unknown: '—' };
+
+function renderizarMenuProvedor() {
+    const menu = document.getElementById('providerMenu');
+    if (!menu) return;
+
+    const status = typeof getStatusProvedores === 'function' ? getStatusProvedores() : {};
+    const preferido = typeof getProvedorPreferido === 'function' ? getProvedorPreferido() : 'auto';
+
+    menu.innerHTML = OPCOES_PROVEDOR.map(op => {
+        const estado = status[op.id]?.estado || 'unknown';
+        const classeEstado = op.id === 'auto' ? '' : `is-${estado}`;
+        const rotulo = op.id === 'auto' ? '' : ROTULO_ESTADO_PROVEDOR[estado];
+        return `
+            <button type="button" role="menuitemradio" aria-checked="${op.id === preferido}" class="provider-option"
+                onclick="escolherProvedor('${op.id}')">
+                <span>${op.nome}<small>${op.detalhe}</small></span>
+                <span class="provider-state ${classeEstado}">${rotulo}</span>
+            </button>`;
+    }).join('');
+}
+
+function fecharMenuProvedor() {
+    document.getElementById('providerMenu')?.classList.add('hidden');
+    document.getElementById('providerButton')?.setAttribute('aria-expanded', 'false');
+}
+
+function toggleMenuProvedor(event) {
+    event?.stopPropagation();
+    const menu = document.getElementById('providerMenu');
+    if (!menu) return;
+
+    const abrir = menu.classList.contains('hidden');
+    if (abrir) renderizarMenuProvedor();
+    menu.classList.toggle('hidden', !abrir);
+    document.getElementById('providerButton')?.setAttribute('aria-expanded', String(abrir));
+}
+
+function escolherProvedor(id) {
+    definirProvedorPreferido(id);
+    fecharMenuProvedor();
+    cacheJogos = null;
+    ultimoFetchCache = 0;
+    buscarJogosSofaScore(true);
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#providerMenu') && !e.target.closest('#providerButton')) fecharMenuProvedor();
+});
+
+// ========== BUSCA E FILTROS DE STATUS ==========
+function normalizarTexto(texto) {
+    return String(texto || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+let _timerBusca = null;
+
+function aoDigitarBusca(valor) {
+    termoBuscaJogos = valor;
+    document.getElementById('btnLimparBusca')?.classList.toggle('hidden', !valor);
+    clearTimeout(_timerBusca);
+    _timerBusca = setTimeout(() => {
+        if (cacheJogos) exibirJogosNaLista(cacheJogos);
+    }, 120);
+}
+
+function limparBusca() {
+    const input = document.getElementById('buscaJogos');
+    if (input) {
+        input.value = '';
+        input.focus();
+    }
+    aoDigitarBusca('');
+}
+
+function definirFiltroStatus(filtro) {
+    filtroStatusJogos = filtro;
+    if (cacheJogos) exibirJogosNaLista(cacheJogos);
+    else atualizarChipsStatus();
+}
+
+function categoriaStatusJogo(jogo) {
+    if (isJogoAoVivo(jogo)) return 'aovivo';
+    if (jogo.status?.code === 100 || jogo.status?.type === 'finished') return 'encerrados';
+    return 'iniciar';
+}
+
+function atualizarChipsStatus(contagem = {}) {
+    const ids = { todos: 'countTodos', aovivo: 'countAoVivo', iniciar: 'countIniciar', encerrados: 'countEncerrados' };
+    Object.entries(ids).forEach(([chave, id]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = contagem[chave] ?? 0;
+    });
+    document.querySelectorAll('#statusChips .status-chip').forEach(chip => {
+        const ativo = chip.dataset.filtro === filtroStatusJogos;
+        chip.classList.toggle('active', ativo);
+        chip.setAttribute('aria-pressed', String(ativo));
+    });
+}
+
+function jogoCombinaComBusca(jogo, termo) {
+    if (!termo) return true;
+    const alvo = normalizarTexto([
+        jogo.homeTeam?.name, jogo.homeTeam?.shortName,
+        jogo.awayTeam?.name, jogo.awayTeam?.shortName,
+        traduzirNomeEquipe(jogo.homeTeam?.name), traduzirNomeEquipe(jogo.awayTeam?.name),
+        jogo.tournament?.name, jogo.tournament?.fullName
+    ].filter(Boolean).join(' '));
+    return termo.split(/\s+/).every(parte => alvo.includes(parte));
+}
+
+function setAtualizando(ativo) {
+    const btn = document.getElementById('btnAtualizarJogos');
+    const icon = document.getElementById('iconAtualizarJogos');
+    if (btn) btn.disabled = ativo;
+    if (icon) icon.classList.toggle('fa-spin', ativo);
+}
+
+document.addEventListener('keydown', (e) => {
+    const input = document.getElementById('buscaJogos');
+    if (!input) return;
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        const painelVisivel = document.getElementById('painelAdmin')?.style.display !== 'none';
+        if (!painelVisivel) return;
+        e.preventDefault();
+        input.focus();
+        input.select();
+    } else if (e.key === 'Escape') {
+        if (document.activeElement === input && input.value) limparBusca();
+        else if (document.activeElement === input) input.blur();
+        fecharMenuProvedor();
+    }
+});
 
 function atualizarStatusOperacional(tipo, mensagem, origem = 'live') {
     ultimoStatusSistema = {
@@ -429,13 +591,22 @@ function carregarFallbackEventos(dataSelecionada) {
 
 // ========== BUSCA DE JOGOS E PROCESSO DE UI ==========
 async function buscarJogosSofaScore(forcar = true) {
+    setAtualizando(true);
+    try {
+        await executarBuscaJogos(forcar);
+    } finally {
+        setAtualizando(false);
+    }
+}
+
+async function executarBuscaJogos(forcar) {
     const painelStatus = document.getElementById("statusPainel");
     const listaDiv = document.getElementById("listaDeJogos");
 
     if (!forcar && cacheJogos && (Date.now() - ultimoFetchCache) < CACHE_TTL) {
         exibirJogosNaLista(cacheJogos);
         atualizarStatusOperacional('warn', 'Exibindo cache em memória.', 'cache local');
-        painelStatus.innerHTML = `<i class="fa-solid fa-box text-blue-400"></i> Cache: ${cacheJogos.length} jogos (atualizado há ${Math.floor((Date.now() - ultimoFetchCache) / 1000)}s)`;
+        painelStatus.innerHTML = `<i class="fa-solid fa-box text-blue-400"></i> Cache: atualizado há ${Math.floor((Date.now() - ultimoFetchCache) / 1000)}s`;
         return;
     }
 
@@ -445,35 +616,45 @@ async function buscarJogosSofaScore(forcar = true) {
     try {
         const { iso: dataSelecionada } = getDataComOffset(offsetDias);
         
-        // 1. Busca Global (Top Eventos)
-        const data = await fetchSofaScore(`sport/football/scheduled-events/${dataSelecionada}`);
+        // 1. Busca Global (Top Eventos) — Flashscore (primário) / ESPN (fallback)
+        const data = await fetchWithFallback(`sport/football/scheduled-events/${dataSelecionada}`);
         let todosEventos = data.events || [];
 
-        // 2. Busca Específica Brasil (Garante divisões inferiores e regionais)
-        const tornIdsBrasil = new Set();
-        try {
-            // Caminho correto para eventos por categoria (Brasil = 13)
-            const brazilData = await fetchSofaScore(`category/13/scheduled-events/${dataSelecionada}`);
-            if (brazilData.events) {
-                brazilData.events.forEach(brEv => {
-                    const { tornId } = getInfoTorneio(brEv);
-                    if (tornId) tornIdsBrasil.add(tornId);
-                    if (!todosEventos.some(e => e.id === brEv.id)) {
-                        todosEventos.push(brEv);
-                    }
-                });
-            }
-        } catch (eb) { console.error('Erro ao buscar feed extra Brasil:', eb); }
+        // Quando dados vêm de provedores agregados (Flashscore ou ESPN), não precisamos de chamadas secundárias
+        const usandoAgregado = isModoEspn() || todosEventos.some(e => e._source === 'flashscore' || e._source === 'espn');
 
-        // Mesclar Live Global se for Hoje (Resolve bug de fuso horário da madrugada)
-        if (offsetDias === 0) {
+        // 2. Busca Específica Brasil — apenas se estiver em provedor raw SofaScore
+        const tornIdsBrasil = new Set();
+        if (!usandoAgregado) {
             try {
-                const liveData = await fetchSofaScore('sport/football/events/live');
+                const brazilData = await fetchWithFallback(`category/13/scheduled-events/${dataSelecionada}`);
+                if (brazilData.events) {
+                    brazilData.events.forEach(brEv => {
+                        const { tornId } = getInfoTorneio(brEv);
+                        if (tornId) tornIdsBrasil.add(tornId);
+                        if (!todosEventos.some(e => e.id === brEv.id)) {
+                            todosEventos.push(brEv);
+                        }
+                    });
+                }
+            } catch (eb) { console.error('Erro ao buscar feed extra Brasil:', eb); }
+        } else {
+            // Em feeds agregados, mapeia os IDs de torneios presentes
+            todosEventos.forEach(ev => {
+                const { tornId } = getInfoTorneio(ev);
+                if (tornId) tornIdsBrasil.add(tornId);
+            });
+        }
+
+        // 3. Mesclar Live Global se for Hoje — apenas no modo SofaScore
+        if (offsetDias === 0 && !usandoAgregado) {
+            try {
+                const liveData = await fetchWithFallback('sport/football/events/live');
                 if (liveData.events) {
                     liveData.events.forEach(liveEv => {
                         const idx = todosEventos.findIndex(e => e.id === liveEv.id);
                         if (idx !== -1) {
-                            todosEventos[idx] = liveEv; // Sobrescreve dados em cache com dados frescos
+                            todosEventos[idx] = liveEv;
                         } else {
                             todosEventos.push(liveEv);
                         }
@@ -486,18 +667,16 @@ async function buscarJogosSofaScore(forcar = true) {
 
         // Filtrar
         cacheJogos = todosEventos.filter(j => {
-            // Filtro de Data Local para evitar jogos de "ontem" ou "amanhã" que o SofaScore traz no fuso UTC
+            // Filtro de Data Local para evitar jogos de "ontem" ou "amanhã" em fusos divergentes
             const dataEventoLocal = new Date(j.startTimestamp * 1000).toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE });
             if (dataEventoLocal !== dataSelecionada) return false;
 
             const { tornId } = getInfoTorneio(j);
             const ehFavoritoMenu = meusTorneios.some(t => t.id === tornId);
             const ehFixoNoCodigo = CAMPEONATOS_FIXOS_CODIGO.includes(tornId) && !torneiosOcultos.includes(tornId);
-            const ehBrasilFeed = tornIdsBrasil.has(tornId);
+            const ehPaisBrasil = j.tournament?.country === 'Brazil' || (j.tournament?.fullName && j.tournament.fullName.toUpperCase().includes('BRAZIL'));
+            const ehBrasilFeed = tornIdsBrasil.has(tornId) || ehPaisBrasil;
             
-            // Inclui tudo que aparecer no feed Brasil (category/13) para cobrir todas as
-            // competições em que times brasileiros participam no dia selecionado.
-            // Respeita ocultação de torneios.
             if (torneiosOcultos.includes(tornId)) return false;
             return ehFavoritoMenu || ehFixoNoCodigo || ehBrasilFeed;
         });
@@ -514,14 +693,15 @@ async function buscarJogosSofaScore(forcar = true) {
         salvarFallbackEventos(dataSelecionada, cacheJogos);
 
         if (cacheJogos.length > 0) {
-            atualizarStatusOperacional('ok', 'API online e dados sincronizados.', 'sofascore live');
+            const provedor = typeof getProvedorAtivo === 'function' ? getProvedorAtivo() : 'live';
+            const origemLabel = provedor === 'flashscore' ? 'flashscore live' : (provedor === 'espn' ? 'espn fallback' : 'sofascore live');
+            atualizarStatusOperacional('ok', 'API online e dados sincronizados.', origemLabel);
             exibirJogosNaLista(cacheJogos);
-            const aoVivo = cacheJogos.filter(j => isJogoAoVivo(j)).length;
-            const encerrados = cacheJogos.filter(j => j.status?.code === 100 || j.status?.type === 'finished').length;
-            painelStatus.innerHTML = `<i class="fa-solid fa-futbol text-green-400"></i> ${cacheJogos.length} jogos hoje — <span class="text-red-400">${aoVivo} ao vivo</span>, <span class="text-gray-400">${encerrados} encerrados</span>`;
+            painelStatus.innerHTML = '';
         } else {
-            painelStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Nenhum jogo programado para hoje.`;
-            listaDiv.innerHTML = '<div class="text-center text-gray-400 py-12"><i class="fa-solid fa-futbol fa-2x mb-3"></i><p>Nenhuma partida programada para hoje</p></div>';
+            atualizarChipsStatus();
+            painelStatus.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Nenhum jogo programado para esta data.`;
+            listaDiv.innerHTML = '<div class="text-center text-gray-400 py-12"><i class="fa-solid fa-futbol fa-2x mb-3"></i><p>Nenhuma partida programada para esta data</p></div>';
             atualizarStatusOperacional('warn', 'Consulta concluída sem jogos para a data.', 'sofascore live');
         }
     } catch (error) {
@@ -548,24 +728,73 @@ async function buscarJogosSofaScore(forcar = true) {
     }
 }
 
+function jogoEhMonitorado(jogo) {
+    const { tornId } = getInfoTorneio(jogo);
+    const isFixo = CAMPEONATOS_FIXOS_CODIGO.includes(tornId);
+    const isFavorito = meusTorneios.some(t => t.id === tornId);
+    if (isFixo || isFavorito || jogo._source === 'espn') return true;
+
+    const ehBrasil = jogo.tournament?.country === 'Brazil'
+        || (jogo.tournament?.fullName || '').toUpperCase().includes('BRAZIL');
+    return jogo._source === 'flashscore' && ehBrasil;
+}
+
+function limparFiltrosLista() {
+    filtroStatusJogos = 'todos';
+    const input = document.getElementById('buscaJogos');
+    if (input) input.value = '';
+    aoDigitarBusca('');
+}
+
+function renderizarListaVazia(listaDiv, temJogosNoDia) {
+    const filtrando = termoBuscaJogos.trim() || filtroStatusJogos !== 'todos';
+    const titulo = temJogosNoDia && filtrando ? 'Nenhum jogo corresponde aos filtros' : 'Nenhuma partida nesta seleção';
+    const dica = temJogosNoDia && filtrando
+        ? 'Ajuste a busca ou o status. Em "Monitorado", só campeonatos favoritos aparecem — tente "Ver Tudo".'
+        : 'Tente outra data ou use "Ver Tudo" para incluir todos os campeonatos.';
+    const acao = temJogosNoDia && filtrando
+        ? '<button onclick="limparFiltrosLista()" class="mt-4 btn-ghost-action !h-10"><i class="fa-solid fa-filter-circle-xmark"></i> Limpar filtros</button>'
+        : '';
+
+    listaDiv.innerHTML = `
+        <div class="text-center text-gray-400 py-14">
+            <i class="fa-solid fa-futbol fa-2x mb-3 text-slate-600"></i>
+            <p class="font-bold text-slate-300">${titulo}</p>
+            <p class="text-sm mt-1 max-w-md mx-auto">${dica}</p>
+            ${acao}
+        </div>`;
+}
+
 function exibirJogosNaLista(jogos) {
     const listaDiv = document.getElementById("listaDeJogos");
     listaDiv.innerHTML = "";
 
-    const grupos = {};
-    jogos.forEach(jogo => {
-        const { tornId, nome: tornNome } = getInfoTorneio(jogo);
-        
-        // Filtro de Ligas Monitoradas
-        const isFixo = CAMPEONATOS_FIXOS_CODIGO.includes(tornId);
-        if (!mostrarTodasLigas && !isFixo) return;
+    const termo = normalizarTexto(termoBuscaJogos);
+    const noEscopo = jogos.filter(j => mostrarTodasLigas || jogoEhMonitorado(j));
+    const buscados = noEscopo.filter(j => jogoCombinaComBusca(j, termo));
 
+    const contagem = { todos: buscados.length, aovivo: 0, iniciar: 0, encerrados: 0 };
+    buscados.forEach(j => contagem[categoriaStatusJogo(j)]++);
+    atualizarChipsStatus(contagem);
+
+    const visiveis = filtroStatusJogos === 'todos'
+        ? buscados
+        : buscados.filter(j => categoriaStatusJogo(j) === filtroStatusJogos);
+
+    if (visiveis.length === 0) {
+        renderizarListaVazia(listaDiv, jogos.length > 0);
+        return;
+    }
+
+    const grupos = {};
+    visiveis.forEach(jogo => {
+        const { tornId, nome: tornNome } = getInfoTorneio(jogo);
         const key = tornId ? String(tornId) : tornNome;
-        const nomeExib = nomeCampeonatoExibicao(tornId, tornNome);
         if (!grupos[key]) {
             grupos[key] = {
-                nome: nomeExib,
+                nome: nomeCampeonatoExibicao(tornId, tornNome),
                 id: tornId,
+                logo: jogo.tournament?.logo || '',
                 jogos: []
             };
         }
@@ -574,40 +803,40 @@ function exibirJogosNaLista(jogos) {
 
     Object.values(grupos).forEach(grupo => {
         const secao = document.createElement("div");
-        secao.className = "mb-5";
+        secao.className = "mb-4";
 
-        const logoTorneio = grupo.id ? `${BACKEND_URL}?path=unique-tournament/${grupo.id}/image` : '';
+        const logoTorneio = grupo.logo || (grupo.id ? sofaImg(`unique-tournament/${grupo.id}/image`) : '');
         const aoVivoNoGrupo = grupo.jogos.filter(j => isJogoAoVivo(j)).length;
 
         const isFixo = CAMPEONATOS_FIXOS_CODIGO.includes(grupo.id);
-        const corTextoTitulo = isFixo ? 'text-emerald-400' : 'text-gray-300';
-        const badgeFixo = isFixo ? `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ml-2">Destaque</span>` : '';
+        const corTextoTitulo = isFixo ? 'text-emerald-400' : 'text-slate-200';
+        const badgeFixo = isFixo ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold ml-1.5">DESTAQUE</span>` : '';
 
         secao.innerHTML = `
-            <div class="flex items-center gap-3 mb-3 pb-2 border-b border-gray-700/50">
-                ${logoTorneio ? `<img src="${logoTorneio}" class="w-7 h-7 object-contain rounded" onerror="this.style.display='none'">` : ''}
-                <h3 class="font-black text-sm uppercase tracking-wider ${corTextoTitulo} flex items-center">${grupo.nome} ${badgeFixo}</h3>
-                ${aoVivoNoGrupo > 0 ? `<span class="status-live px-2 py-0.5 rounded text-[10px] font-black inline-flex items-center gap-1"><i class="fa-solid fa-circle fa-beat-fade" style="font-size:6px"></i> ${aoVivoNoGrupo} AO VIVO</span>` : ''}
-                <span class="text-gray-600 text-xs ml-auto">${grupo.jogos.length} jogo${grupo.jogos.length > 1 ? 's' : ''}</span>
+            <div class="flex items-center justify-between py-1.5 px-1 text-xs font-bold text-slate-400 border-b border-slate-800/80 mb-2">
+                <div class="flex items-center gap-2.5 min-w-0">
+                    <div class="competition-badge ${logoTorneio ? '' : 'is-empty'}">
+                        ${logoTorneio 
+                            ? `<img src="${logoTorneio}" class="competition-logo" alt="${escapeHTML(grupo.nome)}" onerror="this.parentElement.className='competition-badge is-empty'; this.parentElement.innerHTML='<i class=\\'fa-solid fa-trophy text-amber-500 text-[10px]\\'></i>';">` 
+                            : '<i class="fa-solid fa-trophy text-amber-500 text-[10px]"></i>'}
+                    </div>
+                    <span class="text-slate-200 uppercase tracking-wide text-xs truncate">${escapeHTML(grupo.nome)}</span>
+                    ${badgeFixo}
+                    ${aoVivoNoGrupo > 0 ? `<span class="text-[10px] text-red-400 font-bold ml-1 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span> ${aoVivoNoGrupo} ao vivo</span>` : ''}
+                </div>
+                <span class="text-slate-500 text-[11px] font-normal shrink-0">${grupo.jogos.length} ${grupo.jogos.length > 1 ? 'jogos' : 'jogo'}</span>
             </div>
         `;
 
         const grid = document.createElement("div");
-        grid.className = "grid grid-cols-1 lg:grid-cols-2 gap-3";
+        grid.className = "grid grid-cols-1 xl:grid-cols-2 gap-2";
 
         grupo.jogos.forEach(jogo => {
-            const btn = document.createElement("button");
-            if (isFixo) {
-                btn.className = "bg-gradient-to-r from-emerald-900/20 to-gray-800/60 hover:from-emerald-900/40 hover:to-gray-700/80 p-3.5 rounded-xl text-left flex justify-between items-center border border-emerald-500/30 transition-all hover:scale-[1.01] hover:border-emerald-400/60 shadow-sm shadow-emerald-900/10";
-            } else {
-                btn.className = "bg-gray-700/60 hover:bg-gray-600 p-3.5 rounded-xl text-left flex justify-between items-center border border-gray-600/50 transition-all hover:scale-[1.01] hover:border-blue-500/50";
-            }
-
-            const status = getStatusJogo(jogo);
-            let golsC = jogo.homeScore?.current ?? '-';
-            let golsF = jogo.awayScore?.current ?? '-';
-            let logoC = `${BACKEND_URL}?path=team/${jogo.homeTeam.id}/image`;
-            let logoF = `${BACKEND_URL}?path=team/${jogo.awayTeam.id}/image`;
+            const isLive = isJogoAoVivo(jogo);
+            const isNaoIniciado = (jogo.status?.code === 0 || jogo.status?.type === 'notstarted');
+            const isIntervalo = (jogo.status?.code === 31 || jogo.status?.description === 'Halftime');
+            const isEncerrado = (jogo.status?.code === 100 || jogo.status?.type === 'finished');
+            const isAtivoNoObs = (typeof jogoSelecionadoId !== 'undefined' && jogoSelecionadoId === jogo.id);
 
             let horario = '';
             if (jogo.startTimestamp) {
@@ -615,37 +844,86 @@ function exibirJogosNaLista(jogos) {
                 horario = dt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
             }
 
+            // Cálculo exato e real do minuto e segundo de jogo baseado em AO (início do período atual)
+            let tempoLiveStr = '';
             let tempoExtraAttr = '';
-            let tempoExibicao = status.texto;
-            const isLive = isJogoAoVivo(jogo);
-            if (isLive && jogo.time?.currentPeriodStartTimestamp) {
-                tempoExtraAttr = `data-tempo-jogo="true" data-ts="${jogo.time.currentPeriodStartTimestamp}" data-code="${jogo.status.code}"`;
-                let decorrido = Math.floor(Date.now() / 1000) - jogo.time.currentPeriodStartTimestamp;
-                let min = Math.floor(decorrido / 60);
-                let sec = decorrido % 60;
-                if (jogo.status.code === 7 || jogo.status.code === 12 || jogo.status.description === '2nd half') min += 45;
-                if (jogo.status.code === 31) { min = 45; sec = 0; }
-                tempoExibicao = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            if (isLive) {
+                let aoTs = jogo.time?.currentPeriodStartTimestamp || 0;
+                let isSecondHalf = (jogo.status?.code === 7 || jogo.status?.code === 13 || jogo.status?.description === '2nd half');
+                let nowSec = Math.floor(Date.now() / 1000);
+                let minNumber = 1;
+                let secNumber = 0;
+
+                if (aoTs > 0) {
+                    let elapsed = Math.max(0, nowSec - aoTs);
+                    let m = Math.floor(elapsed / 60);
+                    minNumber = isSecondHalf ? (45 + m) : m;
+                    secNumber = elapsed % 60;
+                } else if (jogo.statusTime?.current) {
+                    minNumber = jogo.statusTime.current;
+                }
+                tempoLiveStr = `${minNumber}:${String(secNumber).padStart(2, '0')}`;
+                tempoExtraAttr = `data-tempo-jogo="true" data-ts="${aoTs}" data-code="${jogo.status?.code || 6}"`;
             }
 
+            let statusHtml = '';
+            if (isLive) {
+                statusHtml = `<span class="status-live-badge"><span class="live-dot"></span><span ${tempoExtraAttr}>${tempoLiveStr}</span></span>`;
+            } else if (isIntervalo) {
+                statusHtml = `<span class="status-int-badge">INT</span>`;
+            } else if (isEncerrado) {
+                statusHtml = `<span class="status-end-badge">FIM</span>`;
+            } else {
+                statusHtml = `<span class="status-time-badge">${horario || '--:--'}</span>`;
+            }
+
+            let golsC = isNaoIniciado ? '-' : (jogo.homeScore?.current ?? '-');
+            let golsF = isNaoIniciado ? '-' : (jogo.awayScore?.current ?? '-');
+            let logoC = jogo.homeTeam.logo || jogo.homeTeam._espnLogo || sofaImg(`team/${jogo.homeTeam.id}/image`);
+            let logoF = jogo.awayTeam.logo || jogo.awayTeam._espnLogo || sofaImg(`team/${jogo.awayTeam.id}/image`);
+
+            const nomeCasa = traduzirNomeEquipe(jogo.homeTeam.name || jogo.homeTeam.shortName || 'Mandante');
+            const nomeFora = traduzirNomeEquipe(jogo.awayTeam.name || jogo.awayTeam.shortName || 'Visitante');
+
+            const casaGanhando = !isNaoIniciado && golsC !== '-' && golsF !== '-' && Number(golsC) > Number(golsF);
+            const foraGanhando = !isNaoIniciado && golsC !== '-' && golsF !== '-' && Number(golsF) > Number(golsC);
+
+            const btn = document.createElement("button");
+            btn.type = 'button';
+            btn.className = `match-item group ${isFixo ? 'is-highlight' : ''} ${isLive ? 'is-live' : ''} ${isAtivoNoObs ? 'is-active-obs' : ''}`;
+            btn.setAttribute('title', `Transmitir no OBS: ${nomeCasa} vs ${nomeFora}`);
+            btn.setAttribute('aria-label', `${nomeCasa} versus ${nomeFora}`);
+
             btn.innerHTML = `
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <img src="${logoC}" onerror="this.src='https://www.sofascore.com/static/images/placeholders/team.svg'" referrerpolicy="no-referrer" class="w-9 h-9 object-contain bg-white/10 rounded-full p-1 shrink-0">
-                    <div class="flex-1 min-w-0">
-                        <div class="text-xs font-bold mb-0.5 flex items-center gap-2 flex-wrap">
-                            <span class="${status.classe} px-2 py-0.5 rounded text-[10px] font-black uppercase inline-flex items-center gap-1">${status.icone} <span ${tempoExtraAttr} class="min-w-[32px] inline-block text-center">${tempoExibicao}</span></span>
-                            ${horario ? `<span class="text-gray-500 text-[10px]"><i class="fa-regular fa-clock"></i> ${horario}</span>` : ''}
-                        </div>
-                        <div class="text-sm font-bold text-white truncate">
-                            ${traduzirNomeEquipe(jogo.homeTeam.name || jogo.homeTeam.shortName)} vs ${traduzirNomeEquipe(jogo.awayTeam.name || jogo.awayTeam.shortName)}
-                        </div>
-                    </div>
-                    <img src="${logoF}" onerror="this.src='https://www.sofascore.com/static/images/placeholders/team.svg'" referrerpolicy="no-referrer" class="w-9 h-9 object-contain bg-white/10 rounded-full p-1 shrink-0">
+                <div class="match-status-col">
+                    ${statusHtml}
                 </div>
-                <div class="text-xl font-black bg-gray-900/80 text-white px-3 py-1.5 rounded-lg ml-3 shrink-0 min-w-[70px] text-center">
-                    ${golsC} - ${golsF}
+                <div class="match-col-divider"></div>
+                <div class="match-teams-col">
+                    <div class="team-row">
+                        <div class="team-info">
+                            <img src="${logoC}" onerror="this.src='https://www.sofascore.com/static/images/placeholders/team.svg'" referrerpolicy="no-referrer" class="team-crest" alt="${escapeHTML(nomeCasa)}">
+                            <span class="team-name ${casaGanhando ? 'font-bold text-white' : 'text-slate-200'}">${escapeHTML(nomeCasa)}</span>
+                        </div>
+                        <span class="team-score ${casaGanhando ? 'text-white' : 'text-slate-400'}">${golsC}</span>
+                    </div>
+                    <div class="team-row">
+                        <div class="team-info">
+                            <img src="${logoF}" onerror="this.src='https://www.sofascore.com/static/images/placeholders/team.svg'" referrerpolicy="no-referrer" class="team-crest" alt="${escapeHTML(nomeFora)}">
+                            <span class="team-name ${foraGanhando ? 'font-bold text-white' : 'text-slate-200'}">${escapeHTML(nomeFora)}</span>
+                        </div>
+                        <span class="team-score ${foraGanhando ? 'text-white' : 'text-slate-400'}">${golsF}</span>
+                    </div>
+                </div>
+                <div class="match-action-col">
+                    ${isAtivoNoObs ? `
+                        <span class="action-obs-active" title="No ar no OBS"><i class="fa-solid fa-tower-broadcast animate-pulse"></i></span>
+                    ` : `
+                        <span class="action-obs-btn" title="Transmitir no OBS"><i class="fa-solid fa-play"></i></span>
+                    `}
                 </div>
             `;
+
             btn.onclick = () => iniciarTransmissaoSofaScore(jogo.id);
             grid.appendChild(btn);
         });
@@ -655,22 +933,21 @@ function exibirJogosNaLista(jogos) {
     });
 }
 
-// Tick cronômetro tempo real na lista
+// Tick cronômetro tempo real na lista (Minutos e Segundos)
 function tickCronometrosDaLista() {
     const els = document.querySelectorAll('[data-tempo-jogo="true"]');
+    const nowSec = Math.floor(Date.now() / 1000);
     els.forEach(el => {
-        const ts = parseInt(el.getAttribute('data-ts'));
-        const code = parseInt(el.getAttribute('data-code'));
-        if (!ts) return;
+        const ts = parseInt(el.getAttribute('data-ts'), 10);
+        const code = parseInt(el.getAttribute('data-code'), 10);
+        if (!ts || ts <= 0) return;
 
-        let decorrido = Math.floor(Date.now() / 1000) - ts;
-        if (decorrido < 0) decorrido = 0;
-        let min = Math.floor(decorrido / 60);
-        let sec = decorrido % 60;
+        const isSecondHalf = (code === 7 || code === 13);
+        const elapsed = Math.max(0, nowSec - ts);
+        const m = Math.floor(elapsed / 60);
+        const min = isSecondHalf ? (45 + m) : m;
+        const sec = elapsed % 60;
 
-        if (code === 7 || code === 12 || code === 34 || code === 35) min += 45; // Aproximação gasta
-        if (code === 31) { min = 45; sec = 0; }
-
-        el.innerText = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+        el.innerText = `${min}:${String(sec).padStart(2, '0')}`;
     });
 }

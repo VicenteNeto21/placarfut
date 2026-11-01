@@ -24,47 +24,39 @@ function atualizarPlacarComEfeito(elementoId, player = 'Atacante', team = 'TIME'
 }
 
 function mostrarNotificacaoSubstituicao(playerIn, playerOut, isHome = true) {
-    const isNordeste = (currentTournamentId === 1596 || currentTournamentId === 11620 || document.getElementById("manTema")?.value === 'theme-nordeste2025');
+    const mainScoreRow = document.getElementById("tvMainScoreRow");
+    const subPanelInside = document.getElementById("tvSubPanelInside");
+    const subLogo = document.getElementById("tvSubLogo");
+    const subIn = document.getElementById("tvSubPlayerIn");
+    const subOut = document.getElementById("tvSubPlayerOut");
     
-    if (isNordeste) {
-        const banner = DOM.subBannerAbove || document.getElementById("tvSubBannerAbove");
-        const elIn = DOM.subInAbove || document.getElementById("tvSubInAbove");
-        const elOut = DOM.subOutAbove || document.getElementById("tvSubOutAbove");
-        if (!banner || !elIn || !elOut) return;
+    if (!mainScoreRow || !subPanelInside || !subLogo || !subIn || !subOut) return;
 
-        elIn.innerText = playerIn;
-        elOut.innerText = playerOut;
+    // 1. Configurar os dados da substituição
+    subIn.innerText = playerIn;
+    subOut.innerText = playerOut;
+    
+    const logoSrc = isHome ? 
+        document.getElementById("imgLogoCasa")?.src : 
+        document.getElementById("imgLogoFora")?.src;
+    
+    if (logoSrc) subLogo.src = logoSrc;
 
-        banner.style.borderBottom = isHome ? "2px solid #FEBA0F" : "none";
-        banner.style.borderTop = !isHome ? "2px solid #FEBA0F" : "1px solid rgba(254, 186, 15, 0.3)";
+    // 2. Animar a troca (Placar sai -> Sub entra) usando GRID STACK (sem hidden)
+    mainScoreRow.classList.add("panel-switch-out");
+    mainScoreRow.classList.remove("panel-switch-in");
+    
+    subPanelInside.classList.remove("panel-switch-out");
+    subPanelInside.classList.add("panel-switch-in");
 
-        banner.classList.remove("hidden");
-        banner.classList.add("flex");
-        
-        setTimeout(() => {
-            banner.classList.remove("flex");
-            banner.classList.add("hidden");
-        }, 5000);
-    } else {
-        const banner = DOM.subBanner || document.getElementById("tvSubBanner");
-        const elIn = DOM.subIn || document.getElementById("tvSubIn");
-        const elOut = DOM.subOut || document.getElementById("tvSubOut");
-        if (!banner || !elIn || !elOut) return;
+    // 3. Reverter após 7 segundos
+    setTimeout(() => {
+        subPanelInside.classList.remove("panel-switch-in");
+        subPanelInside.classList.add("panel-switch-out");
 
-        elIn.innerText = playerIn;
-        elOut.innerText = playerOut;
-
-        banner.style.borderLeft = isHome ? "4px solid #10b981" : "none";
-        banner.style.borderRight = !isHome ? "4px solid #ef4444" : "none";
-
-        banner.classList.remove("-translate-y-full", "translate-y-full", "opacity-0");
-        banner.classList.add("translate-y-0", "opacity-100");
-
-        setTimeout(() => {
-            banner.classList.remove("translate-y-0", "opacity-100");
-            banner.classList.add("-translate-y-full", "opacity-0");
-        }, 5000);
-    }
+        mainScoreRow.classList.remove("panel-switch-out");
+        mainScoreRow.classList.add("panel-switch-in");
+    }, 7000);
 }
 
 function mostrarGoalImmersive(player, team, isHome) {
@@ -155,6 +147,7 @@ function toggleArtilheiros() {
     const bar = DOM.scorersBar || document.getElementById("tvScorersBar");
     const btnIcon = document.querySelector("#btnToggleGols i");
     if (bar) {
+        bar.classList.add("panel-slide");
         if (!mostrarGols) {
             bar.classList.add("hidden");
             if (btnIcon) btnIcon.classList.replace("fa-futbol", "fa-eye-slash");
@@ -174,9 +167,11 @@ function toggleEstatisticas() {
     mostrarEstatisticas = !mostrarEstatisticas;
     const bar = DOM.statsBar || document.getElementById("tvStatsBar");
     if (bar) {
+        bar.classList.add("panel-slide");
         if (!mostrarEstatisticas) {
             bar.classList.add("hidden");
         } else {
+            bar.classList.remove("hidden");
             if (jogoSelecionadoId) buscarEstatisticas(jogoSelecionadoId);
         }
     }
@@ -191,7 +186,7 @@ async function buscarMelhorEmCampo(eventId) {
     }
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/lineups`);
+        const data = await fetchWithFallback(`event/${eventId}/lineups`);
         if (!data || !data.home || !data.away) return;
 
         let bestPlayer = null;
@@ -228,7 +223,7 @@ function exibirJogadorDestaque(player) {
 
     if (!card || !mainScore || !img || !name || !ratingEl) return;
 
-    img.src = `${BACKEND_URL}?path=player/${player.id}/image`;
+    img.src = sofaImg(`player/${player.id}/image`);
     name.innerText = player.name;
     ratingEl.innerText = player.rating.toFixed(1);
 

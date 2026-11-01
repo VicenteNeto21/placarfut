@@ -4,12 +4,12 @@
 async function atualizarRodapeSofaScore() {
     try {
         const { iso: dataHoje } = getDataComOffset(0);
-        
+
         const [dataSched, dataLive] = await Promise.all([
-            fetchSofaScore(`sport/football/scheduled-events/${dataHoje}`),
-            fetchSofaScore('sport/football/events/live').catch(() => ({ events: [] }))
+            fetchWithFallback(`sport/football/scheduled-events/${dataHoje}`),
+            fetchWithFallback('sport/football/events/live').catch(() => ({ events: [] }))
         ]);
-        
+
         let tickerHTML = "";
         const eventos = dataSched.events || [];
 
@@ -23,7 +23,10 @@ async function atualizarRodapeSofaScore() {
 
         const eventosFiltrados = eventos.filter(j => {
             const tornId = j.tournament?.uniqueTournament?.id || j.tournament?.id;
-            return GIRO_TORNEIOS_IDS.includes(tornId) || CAMPEONATOS_FIXOS_CODIGO.includes(tornId);
+            return GIRO_TORNEIOS_IDS.includes(tornId)
+                || CAMPEONATOS_FIXOS_CODIGO.includes(tornId)
+                || j._source === 'espn'
+                || (j._source === 'flashscore' && (GIRO_TORNEIOS_IDS.includes(tornId) || CAMPEONATOS_FIXOS_CODIGO.includes(tornId) || j.tournament?.country === 'Brazil'));
         });
 
         if (eventosFiltrados.length > 0) {
@@ -105,14 +108,14 @@ async function atualizarRodapeSofaScore() {
 
                 let rcC = "";
                 if (j.homeRedCards) {
-                    for(let i=0; i<j.homeRedCards; i++) rcC += `<span class="bg-red-600 w-1.5 h-2.5 inline-block rounded-[1px] ml-1 shadow-[0_0_2px_rgba(220,38,38,0.8)]"></span>`;
+                    for (let i = 0; i < j.homeRedCards; i++) rcC += `<span class="bg-red-600 w-1.5 h-2.5 inline-block rounded-[1px] ml-1 shadow-[0_0_2px_rgba(220,38,38,0.8)]"></span>`;
                 }
                 let rcF = "";
                 if (j.awayRedCards) {
-                    for(let i=0; i<j.awayRedCards; i++) rcF += `<span class="bg-red-600 w-1.5 h-2.5 inline-block rounded-[1px] mr-1 shadow-[0_0_2px_rgba(220,38,38,0.8)]"></span>`;
+                    for (let i = 0; i < j.awayRedCards; i++) rcF += `<span class="bg-red-600 w-1.5 h-2.5 inline-block rounded-[1px] mr-1 shadow-[0_0_2px_rgba(220,38,38,0.8)]"></span>`;
                 }
 
-                const logoTorneio = `${BACKEND_URL}?path=unique-tournament/${tornId}/image`;
+                const logoTorneio = j.tournament?.logo || sofaImg(`unique-tournament/${tornId}/image`);
                 const homeTeamName = escapeHTML(traduzirNomeEquipe(j.homeTeam.shortName || j.homeTeam.name));
                 const awayTeamName = escapeHTML(traduzirNomeEquipe(j.awayTeam.shortName || j.awayTeam.name));
 
@@ -127,10 +130,13 @@ async function atualizarRodapeSofaScore() {
                     currentTournamentName = nomeCompeticaoTicker;
                 }
 
+                const logoHome = j.homeTeam.logo || j.homeTeam._espnLogo || sofaImg(`team/${j.homeTeam.id}/image`);
+                const logoAway = j.awayTeam.logo || j.awayTeam._espnLogo || sofaImg(`team/${j.awayTeam.id}/image`);
+
                 tickerHTML += `
                     <div class="ticker-item" data-tournament="${escapeHTML(nomeCompeticaoTicker)}" data-logo="${logoTorneio}">
                         <span class="ticker-status ${isLive ? 'text-sky-400' : 'text-gray-400'} mr-2">[${tempoStr}]</span>
-                        <img src="${BACKEND_URL}?path=team/${j.homeTeam.id}/image" class="h-5 mr-2 object-contain rounded">
+                        <img src="${logoHome}" onerror="this.style.display='none'" class="h-5 mr-2 object-contain rounded">
                         ${homeTeamName}${rcC}
                         ${extraPenC}
                         <span class="text-white font-black mx-1">${currentHome}</span>
@@ -138,17 +144,17 @@ async function atualizarRodapeSofaScore() {
                         <span class="text-white font-black mx-1">${currentAway}</span>
                         ${extraPenF}
                         ${rcF}${awayTeamName}
-                        <img src="${BACKEND_URL}?path=team/${j.awayTeam.id}/image" class="h-5 ml-2 object-contain rounded">
+                        <img src="${logoAway}" onerror="this.style.display='none'" class="h-5 ml-2 object-contain rounded">
                         ${extraAgr}
                     </div>
                 `;
             });
         }
-        
+
         if (tickerHTML === "") {
             tickerHTML = "<div class='ticker-item'><i class='fa-solid fa-futbol mr-1'></i> Nenhum jogo dos principais campeonatos brasileiros hoje.</div>";
         }
-        
+
         const novoHTML = tickerHTML + tickerHTML;
         const container = DOM.ticker || document.getElementById("tvTicker");
         if (container) {
@@ -169,21 +175,22 @@ async function atualizarRodapeSofaScore() {
                 }
             }
         }
-    } catch (e) { 
-        console.error("Erro no ticker:", e); 
+    } catch (e) {
+        console.error("Erro no ticker:", e);
     }
 }
 
 function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, torneioNome) {
     const overlay = DOM.tickerGoalOverlay || document.getElementById("tickerGoalOverlay");
     const textEl = DOM.tickerGoalText || document.getElementById("tickerGoalText");
+    const container = document.getElementById("tvTickerContainer");
     if (!overlay || !textEl) return;
 
     const siglaCasa = (timeCasa.shortName || timeCasa.name).substring(0, 3).toUpperCase();
     const siglaFora = (timeFora.shortName || timeFora.name).substring(0, 3).toUpperCase();
 
-    const logoC = `${BACKEND_URL}?path=team/${timeCasa.id}/image`;
-    const logoF = `${BACKEND_URL}?path=team/${timeFora.id}/image`;
+    const logoC = timeCasa._espnLogo || sofaImg(`team/${timeCasa.id}/image`);
+    const logoF = timeFora._espnLogo || sofaImg(`team/${timeFora.id}/image`);
 
     textEl.innerHTML = `
         <span class="bg-gray-800 border border-gray-600 text-white px-3 py-0.5 rounded-full text-[10px] uppercase tracking-widest shadow-md mr-4 flex items-center gap-1.5"><i class="fa-solid fa-trophy text-gray-400"></i> ${escapeHTML(torneioNome)}</span>
@@ -196,11 +203,19 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
         <span class="font-normal mx-1">${escapeHTML(siglaFora)}</span>
         <img src="${logoF}" class="h-6 mx-2 object-contain drop-shadow-md" onerror="this.style.display='none'">
     `;
-    
+
     if (torneioNome.toUpperCase().includes("NORDESTE")) {
         overlay.classList.add("nordeste-theme");
     } else {
         overlay.classList.remove("nordeste-theme");
+    }
+
+    if (container) {
+        container.classList.remove("opacity-0", "translate-y-full", "pointer-events-none");
+        if (window.tickerHideTimeout) clearTimeout(window.tickerHideTimeout);
+        window.tickerHideTimeout = setTimeout(() => {
+            container.classList.add("opacity-0", "translate-y-full", "pointer-events-none");
+        }, 12000);
     }
 
     overlay.classList.remove("ticker-goal-anim");
@@ -210,9 +225,11 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
 
 function startTickerObserver() {
     if (tickerObserverLoop) clearInterval(tickerObserverLoop);
+    if (!giroAtivo) return; // Se o giro está desligado, não inicia o observador
+
     currentTournamentLabel = "GIRO DA RODADA";
     estaTrocandoLabel = false;
-    
+
     tickerObserverLoop = setInterval(() => {
         const labelEl = DOM.tickerLabel || document.getElementById('tickerLabel');
         const uiTransmissao = DOM.uiTransmissao || document.getElementById('uiTransmissao');
@@ -226,7 +243,7 @@ function startTickerObserver() {
             if (rect.left >= triggerX - 80 && rect.left <= triggerX + 20) {
                 const tourn = item.getAttribute('data-tournament');
                 const logo = item.getAttribute('data-logo');
-                
+
                 if (tourn && tourn !== currentTournamentLabel) {
                     currentTournamentLabel = tourn;
                     animarTrocaLabel(tourn, logo);
@@ -253,10 +270,10 @@ function animarTrocaLabel(novoTexto, logo) {
     setTimeout(() => {
         const imgHtml = logo ? `<img src="${logo}" class="w-6 h-6 object-contain mr-3 brightness-200" onerror="this.style.display='none'">` : `<i class="fa-solid fa-trophy mr-3 text-gray-400"></i>`;
         labelText.innerHTML = `<div class="flex items-center px-4 w-full justify-center truncate text-[12px] whitespace-nowrap">${imgHtml}${escapeHTML(novoTexto.toUpperCase())}</div>`;
-        
+
         labelText.style.transition = 'none';
         labelText.style.transform = 'translateY(100%)';
-        
+
         void labelText.offsetWidth;
 
         labelText.style.transition = 'all 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
@@ -266,5 +283,31 @@ function animarTrocaLabel(novoTexto, logo) {
         setTimeout(() => {
             estaTrocandoLabel = false;
         }, 600);
-    }, 450); 
+    }, 450);
+}
+
+function aplicarEstadoGiro() {
+    const tickerWrap = document.querySelector('.ticker-wrap');
+    const labelText = document.getElementById('tickerLabelText');
+
+    if (!giroAtivo) {
+        if (tickerWrap) tickerWrap.classList.add('hidden');
+        if (tickerObserverLoop) {
+            clearInterval(tickerObserverLoop);
+            tickerObserverLoop = null;
+        }
+        // Reseta o label para o padrão quando desativado
+        if (labelText) {
+            labelText.innerHTML = `<i class="fa-solid fa-bolt mr-3 text-sky-400"></i> GIRO DA RODADA`;
+            labelText.style.transform = 'translateY(0)';
+            labelText.style.opacity = '1';
+        }
+    } else {
+        if (tickerWrap) tickerWrap.classList.remove('hidden');
+        // Reinicia a lógica se estivermos em modo auto e na tela de transmissão
+        const uiTransmissao = document.getElementById('uiTransmissao');
+        if (uiTransmissao && uiTransmissao.style.display !== "none") {
+            startTickerObserver();
+        }
+    }
 }

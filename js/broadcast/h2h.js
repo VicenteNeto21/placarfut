@@ -61,8 +61,8 @@ async function carregarH2H() {
     
     const tornId = currentEventData?.tournament?.uniqueTournament?.id || currentTournamentId;
     const logoComp = document.getElementById("h2hCompLogo");
-    if (tornId) {
-        logoComp.src = `${BACKEND_URL}?path=unique-tournament/${tornId}/image`;
+    if (tornId || currentEventData?.tournament?.logo) {
+        logoComp.src = currentEventData?.tournament?.logo || sofaImg(`unique-tournament/${tornId}/image`);
         logoComp.style.display = 'block';
     } else {
         logoComp.style.display = 'none';
@@ -96,7 +96,7 @@ async function carregarH2H() {
     document.getElementById("h2hManagerFora").innerText = managerFora.toUpperCase();
     
     try {
-        const mData = await fetchSofaScore(`event/${jogoSelecionadoId}/managers`);
+        const mData = await fetchWithFallback(`event/${jogoSelecionadoId}/managers`);
         if (mData.homeManager?.name) document.getElementById("h2hManagerCasa").innerText = mData.homeManager.name.toUpperCase();
         if (mData.awayManager?.name) document.getElementById("h2hManagerFora").innerText = mData.awayManager.name.toUpperCase();
     } catch(e) {}
@@ -195,7 +195,7 @@ async function carregarH2H() {
                 <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 gap-2">
                     <div class="flex items-center gap-2 min-w-0">
                         <span class="text-[9px] font-black ${locCorClass} shrink-0">${localizacao}</span>
-                        <img src="${BACKEND_URL}?path=team/${rivalId}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${rivalId}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                         <div class="flex flex-col min-w-0">
                             <span class="text-white font-bold text-xs truncate">${rival}</span>
                             <span class="text-[9px] uppercase tracking-widest text-gray-500 truncate">${comp || data}</span>
@@ -227,7 +227,7 @@ async function carregarH2H() {
 
     const carregarFormaTime = async (teamId, containerId) => {
         try {
-            const data = await fetchSofaScore(`team/${teamId}/events/last/0`);
+            const data = await fetchWithFallback(`team/${teamId}/events/last/0`);
             const eventos = data?.events || data?.lastEvents || data?.previousEvents || [];
             const forma = extrairFormaRecente(eventos, teamId);
             renderForm(forma, containerId);
@@ -247,7 +247,7 @@ async function carregarH2H() {
             return;
         }
         try {
-            const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
+            const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
             if (!data.standings || data.standings.length === 0) throw new Error();
             let html = '';
             data.standings.forEach(std => {
@@ -266,7 +266,7 @@ async function carregarH2H() {
                         <div class="flex items-center justify-between theme-bg border theme-border rounded-lg px-4 py-2" style="border-left: 4px solid ${color}">
                             <div class="flex items-center gap-3 w-1/3 min-w-[120px]">
                                 <span class="text-lg font-black text-gray-300 w-6 text-center">${pos}º</span>
-                                <img src="${BACKEND_URL}?path=team/${r.team.id}/image" class="w-6 h-6 object-contain">
+                                <img src="${sofaImg(`team/${r.team.id}/image`)}" class="w-6 h-6 object-contain">
                                 <span class="font-bold text-white truncate text-sm" style="max-width: 90px">${escapeHTML(r.team.shortName || r.team.name)}</span>
                             </div>
                             <div class="flex items-center justify-between flex-1 px-2 text-center gap-2">
@@ -299,10 +299,12 @@ async function carregarH2H() {
         const xGCasaEl = document.getElementById("h2hXGCasa");
         const xGForaEl = document.getElementById("h2hXGFora");
         if (!pitchEl || !currentEventData?.id) return;
-        document.getElementById("h2hShotmapLogoCasa").src = `${BACKEND_URL}?path=team/${currentHomeTeamId}/image`;
-        document.getElementById("h2hShotmapLogoFora").src = `${BACKEND_URL}?path=team/${currentAwayTeamId}/image`;
+        const logoCasaSrc = currentEventData?.homeTeam?.logo || currentEventData?.homeTeam?._espnLogo || sofaImg(`team/${currentHomeTeamId}/image`);
+        const logoForaSrc = currentEventData?.awayTeam?.logo || currentEventData?.awayTeam?._espnLogo || sofaImg(`team/${currentAwayTeamId}/image`);
+        document.getElementById("h2hShotmapLogoCasa").src = logoCasaSrc;
+        document.getElementById("h2hShotmapLogoFora").src = logoForaSrc;
         try {
-            const data = await fetchSofaScore(`event/${currentEventData.id}/shotmap`);
+            const data = await fetchWithFallback(`event/${currentEventData.id}/shotmap`);
             const shots = data?.shotmap || [];
             const dots = pitchEl.querySelectorAll('.shot-dot');
             dots.forEach(d => d.remove());
@@ -354,7 +356,7 @@ async function carregarH2H() {
             return;
         }
         try {
-            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/h2h`);
+            const data = await fetchWithFallback(`event/${jogoSelecionadoId}/h2h`);
             const eventos = data?.previousEvents || data?.events || [];
             if (!eventos.length) {
                 listEl.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem confrontos diretos registrados</div>';
@@ -375,9 +377,11 @@ async function carregarH2H() {
             const nomeCasa = (DOM.nomeCasa || document.getElementById("tvNomeCasa"))?.innerText || 'Casa';
             const nomeFora = (DOM.nomeFora || document.getElementById("tvNomeFora"))?.innerText || 'Fora';
             if (scoreEl) {
+                const logoCasaH2h = currentEventData?.homeTeam?.logo || currentEventData?.homeTeam?._espnLogo || sofaImg(`team/${currentHomeTeamId}/image`);
+                const logoForaH2h = currentEventData?.awayTeam?.logo || currentEventData?.awayTeam?._espnLogo || sofaImg(`team/${currentAwayTeamId}/image`);
                 scoreEl.innerHTML = `
                     <div class="flex flex-col items-center">
-                        <img src="${BACKEND_URL}?path=team/${currentHomeTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <img src="${logoCasaH2h}" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
                         <span class="text-3xl font-black text-emerald-400">${wHome}</span>
                         <span class="text-[10px] text-gray-400 uppercase font-bold">${escapeHTML(nomeCasa)}</span>
                     </div>
@@ -387,7 +391,7 @@ async function carregarH2H() {
                         <span class="text-[10px] text-gray-400 uppercase font-bold">Empates</span>
                     </div>
                     <div class="flex flex-col items-center">
-                        <img src="${BACKEND_URL}?path=team/${currentAwayTeamId}/image" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
+                        <img src="${logoForaH2h}" class="w-10 h-10 object-contain mb-1" onerror="this.style.display='none'">
                         <span class="text-3xl font-black text-blue-400">${wAway}</span>
                         <span class="text-[10px] text-gray-400 uppercase font-bold">${escapeHTML(nomeFora)}</span>
                     </div>
@@ -408,7 +412,7 @@ async function carregarH2H() {
                 return `
                     <div class="flex items-center justify-between rounded-xl border border-white/5 bg-black/20 px-3 py-2 text-xs gap-2">
                         <div class="flex items-center gap-2 w-[35%] min-w-0">
-                            <img src="${BACKEND_URL}?path=team/${cHome?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                            <img src="${sofaImg(`team/${cHome?.id}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                             <span class="${corHome} truncate">${escapeHTML(cHome?.shortName || cHome?.name || '?')}</span>
                         </div>
                         <div class="text-center font-black text-base shrink-0">
@@ -418,7 +422,7 @@ async function carregarH2H() {
                         </div>
                         <div class="flex items-center gap-2 w-[35%] justify-end min-w-0">
                             <span class="${corAway} truncate text-right">${escapeHTML(cAway?.shortName || cAway?.name || '?')}</span>
-                            <img src="${BACKEND_URL}?path=team/${cAway?.id}/image" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
+                            <img src="${sofaImg(`team/${cAway?.id}/image`)}" class="w-4 h-4 object-contain shrink-0" onerror="this.style.display='none'">
                         </div>
                         <div class="shrink-0 text-right min-w-[60px]">
                             <div class="text-gray-500 text-[9px]">${data}</div>
@@ -438,7 +442,7 @@ async function carregarH2H() {
         if (!el) return;
         if (!currentTournamentId || !currentSeasonId) { el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Torneio não identificado</div>'; return; }
         try {
-            const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/top-players/scoring`);
+            const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/top-players/scoring`);
             const players = data?.topPlayers || data?.players || [];
             if (!players.length) { el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Sem dados de artilheiros</div>'; return; }
             const topMax = players[0]?.statistics?.goals || 1;
@@ -453,7 +457,7 @@ async function carregarH2H() {
                 return `
                     <div class="flex items-center gap-3 rounded-xl border ${isInGame ? 'border-theme-border bg-white/10' : 'border-white/5 bg-black/20'} px-3 py-2">
                         <span class="text-sm shrink-0 w-6 text-center">${medalha}</span>
-                        <img src="${BACKEND_URL}?path=team/${team?.id}/image" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
+                        <img src="${sofaImg(`team/${team?.id}/image`)}" class="w-6 h-6 object-contain shrink-0" onerror="this.style.display='none'">
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
                                 <span class="text-white font-bold text-sm truncate">${escapeHTML(player.shortName || player.name || '?')}</span>
@@ -476,7 +480,7 @@ async function carregarH2H() {
         const el = document.getElementById("h2hLiveStats");
         if (!el || !jogoSelecionadoId) return;
         try {
-            const data = await fetchSofaScore(`event/${jogoSelecionadoId}/statistics`);
+            const data = await fetchWithFallback(`event/${jogoSelecionadoId}/statistics`);
             const groups = data?.statistics?.[0]?.groups || data?.statistics || [];
             if (!groups.length) { el.innerHTML = '<div class="text-center text-gray-500 text-xs italic">Estatísticas não disponíveis (jogo ainda não começou ou sem dados)</div>'; return; }
             const statsMap = {};

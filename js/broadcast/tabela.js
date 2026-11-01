@@ -5,9 +5,9 @@ function toggleTabela() {
     mostrarTabela = !mostrarTabela;
     const painel = DOM.panelTabela || document.getElementById("tvPanelTabela");
     const btn = DOM.btnToggleTabela || document.getElementById("btnToggleTabela");
-    
+
     if (mostrarTabela && mostrarConfrontos) toggleConfrontos();
-    
+
     if (mostrarTabela) {
         painel.classList.remove("oculto");
         painel.style.opacity = "1";
@@ -30,13 +30,13 @@ async function carregarTabela(silencioso = false) {
 
     if (!currentSeasonId && currentTournamentId) {
         try {
-            const tourData = await fetchSofaScore(`unique-tournament/${currentTournamentId}/seasons`);
+            const tourData = await fetchWithFallback(`unique-tournament/${currentTournamentId}/seasons`);
             if (tourData && tourData.seasons && tourData.seasons.length > 0) {
                 currentSeasonId = tourData.seasons[0].id;
             } else {
                 console.warn("Nenhuma temporada encontrada para o torneio:", currentTournamentId);
             }
-        } catch(e) {
+        } catch (e) {
             console.error("Erro ao buscar temporadas:", e);
         }
     }
@@ -45,9 +45,9 @@ async function carregarTabela(silencioso = false) {
         tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Dados de tabela indisponíveis.</td></tr>`;
         return;
     }
-    
+
     try {
-        const data = await fetchSofaScore(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
+        const data = await fetchWithFallback(`unique-tournament/${currentTournamentId}/season/${currentSeasonId}/standings/total`);
         if (!data.standings || data.standings.length === 0) {
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-gray-500">Tabela não encontrada para esta fase.</td></tr>`;
             return;
@@ -58,7 +58,17 @@ async function carregarTabela(silencioso = false) {
 
         let html = '';
         let currentTablePositions = {};
-        data.standings.forEach(std => {
+
+        let standingsToShow = data.standings;
+        // Filtragem Inteligente para Série D (Tabela muito grande)
+        if (currentTournamentId === 10326 && data.standings.length > 1) {
+            const selectedGroup = data.standings.find(std =>
+                std.rows.some(r => r.team.id === currentHomeTeamId || r.team.id === currentAwayTeamId)
+            );
+            if (selectedGroup) standingsToShow = [selectedGroup];
+        }
+
+        standingsToShow.forEach(std => {
             if (data.standings.length > 1 && std.name) {
                 html += `<tr><td colspan="5" class="bg-gray-800 border-y border-gray-700 text-center text-[10px] font-bold py-1 text-gray-400 uppercase tracking-widest">${escapeHTML(std.name)}</td></tr>`;
             }
@@ -72,7 +82,11 @@ async function carregarTabela(silencioso = false) {
                 const sg = r.goalsDiff ?? r.scoreDiff ?? ((r.scoresFor ?? 0) - (r.scoresAgainst ?? 0));
 
                 let promoColor = 'bg-transparent';
-                if (r.promotion) {
+                if (currentTournamentId === 1281) {
+                    // Regra específica Série C 2026: G8 avança, Z2 rebaixa
+                    if (pos <= 8) promoColor = 'bg-emerald-400';
+                    else if (pos >= 19) promoColor = 'bg-red-500';
+                } else if (r.promotion) {
                     const txt = (r.promotion.text || '').toLowerCase();
                     if (txt.includes('libertadores')) promoColor = 'bg-sky-500';
                     else if (txt.includes('sul-americana') || txt.includes('sudamericana')) promoColor = 'bg-orange-500';
@@ -98,7 +112,7 @@ async function carregarTabela(silencioso = false) {
 
                 const isPlaying = (teamId === currentHomeTeamId || teamId === currentAwayTeamId);
                 const highlightClass = isPlaying ? 'bg-sky-900 font-bold text-sky-100' : 'hover:bg-gray-800';
-                
+
                 let flashClass = '';
                 if (silencioso && prevTablePositions[teamId] !== undefined) {
                     if (pos < prevTablePositions[teamId]) flashClass = 'flash-row-up';
@@ -116,24 +130,24 @@ async function carregarTabela(silencioso = false) {
                         </td>
                         <td class="py-0.5">
                             <div class="flex items-center gap-1.5">
-                                <img src="${BACKEND_URL}?path=team/${teamId}/image" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">
+                                <img src="${sofaImg(`team/${teamId}/image`)}" class="w-4 h-4 object-contain rounded" onerror="this.style.display='none'">
                                 <span class="truncate max-w-[110px]">${teamName}</span>
                             </div>
                         </td>
                         <td class="py-0.5 text-center font-black">${pts}</td>
                         <td class="py-0.5 text-center text-gray-400">${jogos}</td>
-                        <td class="py-0.5 text-center text-gray-400">${sg > 0 ? '+'+sg : sg}</td>
+                        <td class="py-0.5 text-center text-gray-400">${sg > 0 ? '+' + sg : sg}</td>
                     </tr>
                 `;
             });
         });
-        
+
         tbody.innerHTML = html;
         prevTablePositions = currentTablePositions;
 
         if (scrollTabelaInterval) { clearInterval(scrollTabelaInterval); scrollTabelaInterval = null; }
         if (scrollTabelaTimeout) { clearTimeout(scrollTabelaTimeout); scrollTabelaTimeout = null; }
-        const container = document.querySelector('#tvPanelTabela .overflow-y-auto');
+        const container = document.querySelector('#tvPanelTabela .overflow-hidden');
         if (container) container.scrollTop = 0;
 
     } catch (e) {

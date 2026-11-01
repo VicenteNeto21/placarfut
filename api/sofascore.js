@@ -34,22 +34,29 @@ module.exports = async function handler(req, res) {
         return res.status(400).json({ error: 'Path não permitido' });
     }
 
-    const baseUrls = [
-        'https://www.sofascore.com/api/v1',
-        'https://api.sofascore.app/api/v1',
-        'https://api.sofascore.com/api/v1'
-    ];
+    // Detecta se o path é de imagem (team/ID/image, player/ID/image, unique-tournament/ID/image)
+    const isImageRequest = /\/image(\/|$)/.test(path);
+    const captchaToken = process.env.SOFA_CAPTCHA || req.query.captcha || '';
+
+    const baseUrls = isImageRequest
+        ? [
+            'https://api.sofascore.app/api/v1',
+            'https://www.sofascore.com/api/v1',
+            'https://api.sofascore.com/api/v1'
+        ]
+        : [
+            'https://www.sofascore.com/api/v1',
+            'https://api.sofascore.com/api/v1'
+        ];
 
     const requestHeaders = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
         'Accept': 'application/json, text/plain, */*',
         'Accept-Language': 'pt-BR,pt;q=0.9,en;q=0.8',
         'Referer': 'https://www.sofascore.com/',
-        'Origin': 'https://www.sofascore.com'
+        'Origin': 'https://www.sofascore.com',
+        ...(captchaToken ? { 'X-Captcha': captchaToken, 'Cookie': `sofa_captcha=${captchaToken}` } : {})
     };
-
-    // Detecta se o path é de imagem (team/ID/image, player/ID/image, unique-tournament/ID/image)
-    const isImageRequest = /\/image(\/|$)/.test(path);
 
     try {
         let lastError = null;
@@ -69,6 +76,10 @@ module.exports = async function handler(req, res) {
                 // Resposta binária (imagens, SVG)
                 if (isImageRequest || contentType.includes('image') || contentType.includes('svg')) {
                     const buffer = await response.arrayBuffer();
+                    if (!buffer || buffer.byteLength < 50) {
+                        lastError = new Error(`Imagem vazia em ${baseUrl}`);
+                        continue;
+                    }
                     res.setHeader('Content-Type', contentType || 'image/png');
                     res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=3600');
                     res.status(200).end(Buffer.from(buffer));
@@ -76,8 +87,13 @@ module.exports = async function handler(req, res) {
                 }
 
                 // Resposta JSON (dados de eventos, estatísticas, etc.)
+                const rawText = await response.text();
+                if (!rawText || rawText.trim().length < 2) {
+                    lastError = new Error(`Resposta vazia em ${baseUrl}`);
+                    continue;
+                }
+                const data = JSON.parse(rawText);
                 res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=30');
-                const data = await response.json();
                 res.status(200).json(data);
                 return;
             } catch (error) {

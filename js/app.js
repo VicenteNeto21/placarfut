@@ -10,7 +10,23 @@ document.addEventListener("DOMContentLoaded", () => {
     inicializarArrastador();
     inicializarArrastadorTabela();
     inicializarArrastadorConfrontos();
+    inicializarArrastadorProximosJogos();
+    inicializarArrastadorInscritos();
     if (typeof renderizarStatusOperacional === 'function') renderizarStatusOperacional();
+
+    // Pré-carregar contagem de inscritos do YouTube (sempre, independente do modo)
+    setTimeout(() => {
+        const apiKey = document.getElementById("manApiKey")?.value?.trim();
+        const channelId = document.getElementById("manChannelId")?.value?.trim();
+        if (apiKey && channelId && apiKey.startsWith('AIza') && !inscritosAutoInterval) {
+            // Busca única silenciosa para deixar o dado pronto
+            preCarregarInscritos(apiKey, channelId);
+        }
+    }, 500);
+    
+    // Inicializa o estado visual do Giro da Rodada
+    if (typeof renderizarBotaoGiro === 'function') renderizarBotaoGiro();
+    if (typeof aplicarEstadoGiro === 'function') aplicarEstadoGiro();
     
     // Sempre iniciar a busca de jogos em segundo plano para que o painel admin 
     // nunca fique vazio caso o usuário "Saia" da transmissão restaurada.
@@ -42,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
             if(document.getElementById("manAcrescimo")) document.getElementById("manAcrescimo").value = d.acrescimo || "0";
             if(document.getElementById("manPeriodo")) document.getElementById("manPeriodo").value = d.periodo || "PRÉ-JOGO";
             if(document.getElementById("manTema")) document.getElementById("manTema").value = d.tema || "";
+            if(document.getElementById("manRodada")) document.getElementById("manRodada").value = d.rodada || "";
             if(document.getElementById("manPenCasa")) document.getElementById("manPenCasa").value = d.penCasa || "";
             if(document.getElementById("manPenFora")) document.getElementById("manPenFora").value = d.penFora || "";
             if(document.getElementById("manAgrCasa")) document.getElementById("manAgrCasa").value = d.agrCasa || "";

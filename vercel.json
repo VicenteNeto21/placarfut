@@ -12,8 +12,20 @@
       "destination": "/api/sofascore.js"
     },
     {
+      "source": "/api/flashscore",
+      "destination": "/api/flashscore.js"
+    },
+    {
       "source": "/api/espn",
       "destination": "/api/espn.js"
+    },
+    {
+      "source": "/api/espn-agregado",
+      "destination": "/api/espn-agregado.js"
+    },
+    {
+      "source": "/api/openweather",
+      "destination": "/api/openweather.js"
     }
   ],
   "headers": [

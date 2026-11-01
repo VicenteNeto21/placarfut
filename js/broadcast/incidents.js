@@ -10,28 +10,34 @@ async function buscarIncidentesSofaScore(eventId, isLive = true) {
     if (!scorersCasa || !scorersFora || !scorersBar) return;
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/incidents`);
+        const data = await fetchWithFallback(`event/${eventId}/incidents`);
+        
         if (!data || !data.incidents) {
+            console.log('[INCIDENTS] Sem dados ou incidentes:', data);
+            // Ocultar VAR quando não houver dados
+            const varOverlay = DOM.varOverlay || document.getElementById("tvVAROverlay");
+            if (varOverlay && !isVARActive) {
+                varOverlay.classList.add("hidden");
+                varOverlay.classList.remove("flex");
+            }
             scorersCasa.innerHTML = '';
             scorersFora.innerHTML = '';
             scorersBar.classList.add('hidden');
-            const elYcC = DOM.yellowCardCasa || document.getElementById("tvYellowCardCasa");
-            if (elYcC) elYcC.classList.add("hidden");
-            const elYcF = DOM.yellowCardFora || document.getElementById("tvYellowCardFora");
-            if (elYcF) elYcF.classList.add("hidden");
             return;
         }
 
-        // Auto-detect VAR (Apenas se o jogo estiver AO VIVO)
-        const varOverlay = DOM.varOverlay || document.getElementById("tvVAROverlay");
-        if (varOverlay) {
-            const hasActiveVAR = isLive && data.incidents.some(inc => inc.incidentType === 'varDecision' && !inc.confirmed);
-            if (hasActiveVAR) {
-                varOverlay.classList.remove("hidden");
-            } else {
-                varOverlay.classList.add("hidden");
-            }
-        }
+        // Auto-detect VAR desativado temporariamente
+        // const varOverlay = DOM.varOverlay || document.getElementById("tvVAROverlay");
+        // if (varOverlay) {
+        //     const hasActiveVAR = data?.incidents?.some(inc => inc.incidentType === 'varDecision' && !inc.confirmed);
+        //     if (isLive && hasActiveVAR) {
+        //         varOverlay.classList.remove("hidden");
+        //         varOverlay.classList.add("flex");
+        //     } else if (!isVARActive) {
+        //         varOverlay.classList.add("hidden");
+        //         varOverlay.classList.remove("flex");
+        //     }
+        // }
 
         const goleiros = { casa: [], fora: [] };
         let ycC = 0, ycF = 0;
@@ -170,7 +176,7 @@ async function buscarEstatisticas(eventId) {
     if (!statsBar) return;
 
     try {
-        const data = await fetchSofaScore(`event/${eventId}/statistics`);
+        const data = await fetchWithFallback(`event/${eventId}/statistics`);
         if (!data.statistics || data.statistics.length === 0) {
             statsBar.classList.add('hidden');
             return;

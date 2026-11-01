@@ -1,3 +1,22 @@
+
+// Gestão do Dropdown de Testes na Barra de Transmissão
+function toggleMenuTestes(event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('menuTestesDropdown');
+    if (menu) menu.classList.toggle('hidden');
+}
+
+function fecharMenuTestes() {
+    const menu = document.getElementById('menuTestesDropdown');
+    if (menu) menu.classList.add('hidden');
+}
+
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('#dropdownTestesContainer')) {
+        fecharMenuTestes();
+    }
+});
+
 // ========== js/broadcast/index.js ==========
 // Funções principais do broadcast: iniciar, voltar, atualizar dados, aplicar tema
 // Depende de: state.js, dom-cache.js, utils.js, api.js, translations.js
@@ -145,29 +164,35 @@ function voltarAoPainel() {
     }
 }
 
-function aplicarTemaPlacar(tornId) {
+function aplicarTemaPlacar(tornId, tornName = "") {
     const placar = DOM.placarCard || document.getElementById("placarCard");
     const h2hCard = DOM.h2hCard || document.getElementById("h2hCard");
     const wrapper = DOM.placarWrapper || document.getElementById("placarWrapper");
     if (!placar) return;
     
+    // Reseta o tema atual mantendo as classes fixas
     placar.className = "placar-compacto rounded-xl flex flex-col overflow-hidden relative z-10 transition-transform duration-500";
-    if (h2hCard) h2hCard.className = "h2h-panel theme-bg-dark border theme-border p-8 rounded-[2rem] shadow-2xl flex flex-col items-center w-[1100px] relative overflow-hidden transition-all duration-300";
+    if (h2hCard) h2hCard.className = "h2h-panel theme-bg-dark border theme-border p-8 rounded-[2rem] flex flex-col items-center w-[1100px] relative overflow-hidden transition-all duration-300";
     if (wrapper) wrapper.classList.remove("layout-nordeste2025", "layout-copa", "layout-seried");
     
     let isCopa = false;
     let isNordeste2025 = false;
     let isSerieD = false;
+    let isSerieC = false;
     let temaClass = "";
 
-    if (tornId === 384) { temaClass = "theme-libertadores"; isCopa = true; }
-    else if (tornId === 480 || tornId === 11539) { temaClass = "theme-sulamericana"; isCopa = true; }
-    else if (tornId === 1596 || tornId === 11620) { temaClass = "theme-nordeste2025"; isNordeste2025 = true; }
-    else if (tornId === 73) { temaClass = "theme-brasil"; isCopa = true; }
-    else if (tornId === 17015) { temaClass = "theme-verde"; isCopa = true; }
-    else if (tornId === 13076 || tornId === 10257) { temaClass = "theme-feminino"; isCopa = true; }
-    else if (tornId === 16 || tornId === 482 || tornId === 704 || tornId === 712 || tornId === 1406 || tornId === 1045 || tornId === 10618 || tornId === 11) { temaClass = "theme-fifa2026"; isCopa = true; }
-    else if (tornId === 10326) { temaClass = "theme-serieD"; isSerieD = true; }
+    const idNum = Number(tornId);
+    const nameMatch = (tornName && tornName.toUpperCase().includes("SÉRIE C"));
+
+    if (idNum === 384) { temaClass = "theme-libertadores"; isCopa = true; }
+    else if (idNum === 480 || idNum === 11539) { temaClass = "theme-sulamericana"; isCopa = true; }
+    else if (idNum === 1596 || idNum === 11620) { temaClass = "theme-nordeste2025"; isNordeste2025 = true; }
+    else if (idNum === 73) { temaClass = "theme-brasil"; isCopa = true; }
+    else if (idNum === 17015) { temaClass = "theme-verde"; isCopa = true; }
+    else if (idNum === 13076 || idNum === 10257) { temaClass = "theme-feminino"; isCopa = true; }
+    else if (idNum === 16 || idNum === 482 || idNum === 704 || idNum === 712 || idNum === 1406 || idNum === 1045 || idNum === 10618 || idNum === 11) { temaClass = "theme-fifa2026"; isCopa = true; }
+    else if (idNum === 10326) { temaClass = "theme-serieD"; isSerieD = true; }
+    else if (idNum === 1281 || nameMatch) { temaClass = "theme-serieC"; isSerieC = true; }
 
     if (temaClass) {
         placar.classList.add(temaClass);
@@ -182,12 +207,10 @@ function aplicarTemaPlacar(tornId) {
         const txtTam = DOM.textoTamanho || document.getElementById("textoTamanho");
         if (txtTam) txtTam.innerText = "95%";
     } else if (isSerieD) {
-        placar.classList.remove("rounded-xl");
         placar.classList.add("layout-seried");
         if (wrapper) wrapper.classList.add("layout-seried");
         if (h2hCard) { h2hCard.classList.remove("rounded-[2rem]"); h2hCard.classList.add("layout-seried"); }
-    } else if (isCopa) {
-        placar.classList.remove("rounded-xl");
+    } else if (isCopa || isSerieC) {
         placar.classList.add("layout-copa");
         if (h2hCard) { h2hCard.classList.remove("rounded-[2rem]"); h2hCard.classList.add("layout-copa"); }
     }
@@ -197,15 +220,17 @@ async function atualizarDadosSofaScore() {
     if (!jogoSelecionadoId) return;
 
     try {
-        const eventData = await fetchSofaScore(`event/${jogoSelecionadoId}`);
+        const eventData = await fetchWithFallback(`event/${jogoSelecionadoId}`);
         const jogo = eventData.event;
         currentEventData = jogo;
         
         currentTournamentId = jogo.tournament?.uniqueTournament?.id || jogo.tournament?.id;
+        const tournamentName = jogo.tournament?.name || "";
+
         currentSeasonId = jogo.season?.id;
         if (!currentSeasonId && currentTournamentId) {
             try {
-                const tourData = await fetchSofaScore(`unique-tournament/${currentTournamentId}/seasons`);
+                const tourData = await fetchWithFallback(`unique-tournament/${currentTournamentId}/seasons`);
                 if (tourData.seasons && tourData.seasons.length > 0) {
                     currentSeasonId = tourData.seasons[0].id;
                 }
@@ -214,7 +239,7 @@ async function atualizarDadosSofaScore() {
         currentHomeTeamId = jogo.homeTeam.id;
         currentAwayTeamId = jogo.awayTeam.id;
         
-        aplicarTemaPlacar(currentTournamentId);
+        aplicarTemaPlacar(currentTournamentId, tournamentName);
 
         const golsC = jogo.homeScore?.current || 0;
         const golsF = jogo.awayScore?.current || 0;
@@ -244,7 +269,15 @@ async function atualizarDadosSofaScore() {
 
         const tidTv = jogo.tournament?.uniqueTournament?.id || jogo.tournament?.id || 0;
         const campeonato = DOM.campeonato || document.getElementById("tvCampeonato");
-        if (campeonato) campeonato.innerHTML = nomeCampeonatoExibicao(tidTv, jogo.tournament?.name, 'SOFASCORE LIVE').toUpperCase();
+        if (campeonato) {
+            let compName = nomeCampeonatoExibicao(tidTv, jogo.tournament?.name, 'SOFASCORE LIVE').toUpperCase();
+            if (jogo.roundInfo?.round) {
+                compName += ` - RODADA ${String(jogo.roundInfo.round).padStart(2, '0')}`;
+            } else if (jogo.roundInfo?.name) {
+                compName += ` - ${mapTraducoesCampeonato(jogo.roundInfo.name).toUpperCase()}`;
+            }
+            campeonato.innerHTML = compName;
+        }
         
         // Logo da Competição
         const elLogoComp = DOM.logoComp || document.getElementById("tvLogoComp");
@@ -254,7 +287,7 @@ async function atualizarDadosSofaScore() {
                 elLogoComp.src = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:210&quality=75";
                 elLogoComp.classList.remove("hidden");
             } else if (currentTournamentId === 1596 || currentTournamentId === 11620) {
-                elLogoComp.src = `${BACKEND_URL}?path=unique-tournament/${currentTournamentId}/image`;
+                elLogoComp.src = sofaImg(`unique-tournament/${currentTournamentId}/image`);
                 elLogoComp.classList.remove("hidden");
             } else {
                 elLogoComp.classList.add("hidden");
@@ -277,8 +310,12 @@ async function atualizarDadosSofaScore() {
 
         const imgLogoCasa = DOM.imgLogoCasa || document.getElementById("imgLogoCasa");
         const imgLogoFora = DOM.imgLogoFora || document.getElementById("imgLogoFora");
-        if (imgLogoCasa) imgLogoCasa.src = `${BACKEND_URL}?path=team/${jogo.homeTeam.id}/image`;
-        if (imgLogoFora) imgLogoFora.src = `${BACKEND_URL}?path=team/${jogo.awayTeam.id}/image`;
+        if (imgLogoCasa) imgLogoCasa.src = jogo.homeTeam.logo
+            || jogo.homeTeam._espnLogo
+            || sofaImg(`team/${jogo.homeTeam.id}/image`);
+        if (imgLogoFora) imgLogoFora.src = jogo.awayTeam.logo
+            || jogo.awayTeam._espnLogo
+            || sofaImg(`team/${jogo.awayTeam.id}/image`);
 
         teamColorCasa = jogo.homeTeam.teamColors?.primary || '#3b82f6';
         teamColorFora = jogo.awayTeam.teamColors?.primary || '#ef4444';

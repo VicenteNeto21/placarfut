@@ -4,6 +4,14 @@
 // Endpoint do backend local ou produção (Proxy para evitar CORS)
 const BACKEND_URL = '/api/sofascore';
 
+// URL direta para imagens — navegador carrega sem precisar de proxy (sem CORS em <img>)
+const SOFASCORE_IMG_URL = 'https://api.sofascore.app/api/v1';
+
+// Helper: gera URL de imagem direta (team, player, unique-tournament)
+function sofaImg(path) {
+    return `${SOFASCORE_IMG_URL}/${path}`;
+}
+
 // Tempo de cache (30 segundos)
 const CACHE_TTL = 30000;
 

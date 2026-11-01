@@ -11,9 +11,9 @@ function definirEscalaPlacar(escala = 0.95) {
     
     const wrapper = DOM.placarWrapper || document.getElementById("placarWrapper");
     if (wrapper) {
-        wrapper.style.transformOrigin = "bottom center";
+        wrapper.style.transformOrigin = "bottom left";
         if (dragOffsetX === null) {
-            wrapper.style.transform = `translateX(-50%) scale(${escalaPlacar})`;
+            wrapper.style.transform = `scale(${escalaPlacar})`;
         } else {
             wrapper.style.transform = `translate(${dragOffsetX}px, ${dragOffsetY}px) scale(${escalaPlacar})`;
         }
@@ -53,8 +53,8 @@ function inicializarArrastador() {
             lastClientY = e.clientY;
 
             if (dragOffsetX === null) {
-                // Removemos o translateX(-50%) do CSS inicial e injetamos o pixel hardcoded para continuar no meio sem dar pulo
-                dragOffsetX = -(wrapperPlacar.offsetWidth / 2);
+                // Como não usamos mais translateX(-50%) no layout default canva, o offset x inicial é 0
+                dragOffsetX = 0;
                 dragOffsetY = 0;
                 wrapperPlacar.style.transform = `translate(${dragOffsetX}px, ${dragOffsetY}px) scale(${escalaPlacar})`;
             }
@@ -149,6 +149,71 @@ function inicializarArrastadorConfrontos() {
             if (isDragging) {
                 isDragging = false;
                 wrapper.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
+        });
+    }
+}
+
+function inicializarArrastadorProximosJogos() {
+    const wrapper = DOM.panelProximosJogos || document.getElementById("tvPanelProximosJogos");
+    const handle = DOM.proximosJogosHandle || document.getElementById("tvProximosJogosHandle");
+    if (wrapper && handle) {
+        let isDragging = false;
+        let offsetX, offsetY;
+        handle.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+            isDragging = true;
+            const rect = wrapper.getBoundingClientRect();
+            wrapper.style.transition = 'none';
+            wrapper.classList.remove("oculto");
+            wrapper.style.right = 'auto';
+            wrapper.style.left = rect.left + 'px';
+            wrapper.style.top = rect.top + 'px';
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            wrapper.style.left = (e.clientX - offsetX) + 'px';
+            wrapper.style.top = (e.clientY - offsetY) + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            if (isDragging) { isDragging = false; wrapper.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'; }
+        });
+    }
+}
+
+function inicializarArrastadorInscritos() {
+    const wrapper = DOM.subscribersPanel || document.getElementById("tvSubscribersPanel");
+    const handle = DOM.subscribersHandle || document.getElementById("tvSubscribersHandle");
+    if (wrapper && handle) {
+        let isDragging = false;
+        let offsetX, offsetY;
+        
+        handle.ondragstart = () => false;
+        
+        handle.addEventListener('mousedown', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) return;
+            isDragging = true;
+            const rect = wrapper.getBoundingClientRect();
+            wrapper.style.transition = 'none';
+            wrapper.classList.remove("oculto-inscritos");
+            
+            wrapper.style.right = 'auto';
+            wrapper.style.left = rect.left + 'px';
+            wrapper.style.top = rect.top + 'px';
+            offsetX = e.clientX - rect.left;
+            offsetY = e.clientY - rect.top;
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            wrapper.style.left = (e.clientX - offsetX) + 'px';
+            wrapper.style.top = (e.clientY - offsetY) + 'px';
+        });
+        document.addEventListener('mouseup', () => {
+            if (isDragging) {
+                isDragging = false;
+                wrapper.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
             }
         });
     }

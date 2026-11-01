@@ -3,6 +3,8 @@
 
 // Estado do fluxo principal
 let modoAtual = 'auto'; // 'auto' ou 'manual'
+let giroAtivo = JSON.parse(localStorage.getItem('futlive_giro_ativo')) !== false; 
+
 let jogoSelecionadoId = null;
 let ultimoPlacar = { casa: -1, fora: -1 };
 let ultimoPlacarTicker = {}; // Guarda placares do Giro da Rodada para detectar gols simultâneos
@@ -26,6 +28,8 @@ let todosOsJogos = [];
 let cacheJogos = null;
 let ultimoFetchCache = 0;
 let offsetDias = 0; // 0 = hoje, -1 = ontem, +1 = amanhã
+let filtroStatusJogos = 'todos'; // 'todos' | 'aovivo' | 'iniciar' | 'encerrados'
+let termoBuscaJogos = '';
 let torneiosOcultos = JSON.parse(localStorage.getItem('futlive_ocultos')) || [];
 let ultimoStatusSistema = {
     tipo: 'idle',
@@ -106,6 +110,7 @@ function salvarSessaoAtiva() {
             acrescimo: document.getElementById("manAcrescimo")?.value,
             periodo: document.getElementById("manPeriodo")?.value,
             tema: document.getElementById("manTema")?.value,
+            rodada: document.getElementById("manRodada")?.value,
             penCasa: document.getElementById("manPenCasa")?.value,
             penFora: document.getElementById("manPenFora")?.value,
             agrCasa: document.getElementById("manAgrCasa")?.value,
