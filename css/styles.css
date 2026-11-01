@@ -19,8 +19,8 @@ body, input, button, select, textarea, .telemetry-bar, #painelAdmin {
         /* Estilos do placar arrastável */
         #placarWrapper {
             position: absolute;
-            width: 500px;
-            max-width: calc(100vw - 32px);
+            width: 780px;
+            max-width: calc(100vw - 40px);
             z-index: 60;
             overflow: visible;
             /* Necessário para que animações 3D (cartão, substituição) não sejam cortadas */

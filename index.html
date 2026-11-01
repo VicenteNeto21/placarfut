@@ -685,12 +685,17 @@
                 </div>
 
                 <div id="dragHandle"
-                    class="drag-handle theme-bg-dark px-4 py-1.5 flex justify-between items-center border-b theme-border hover:bg-white/5 transition-colors cursor-grab">
-                    <span class="flex items-center gap-1.5 min-w-0 max-w-[65%]">
-                        <i class="fa-solid fa-trophy text-[11px] text-amber-400/90 flex-shrink-0"></i>
+                    class="drag-handle theme-bg-dark px-5 py-1.5 flex justify-between items-center border-b theme-border hover:bg-white/5 transition-colors cursor-grab">
+                    <div class="flex items-center gap-2 min-w-0 max-w-[80%] overflow-hidden">
+                        <div id="tvLogoCompContainer" class="w-6 h-6 rounded bg-white flex items-center justify-center p-0.5 overflow-hidden flex-shrink-0 hidden shadow-sm">
+                            <img id="tvLogoComp" src="" referrerpolicy="no-referrer" class="w-full h-full object-contain" alt="Competição" onerror="this.style.display='none'; const fb = document.getElementById('tvLogoFallbackIcon'); if (fb) fb.classList.remove('hidden');">
+                        </div>
+                        <i id="tvLogoFallbackIcon" class="fa-solid fa-trophy text-[11px] text-amber-400 mr-0.5 flex-shrink-0"></i>
                         <span id="tvCampeonato"
-                            class="text-slate-300 font-bold uppercase tracking-wider text-[11px] truncate">FUTLIVE LIVE</span>
-                    </span>
+                            class="text-white font-extrabold uppercase tracking-wider text-xs whitespace-nowrap flex-shrink-0">FUTLIVE LIVE</span>
+                        <span id="tvDivisorContexto" class="text-white/30 text-xs flex-shrink-0 hidden">•</span>
+                        <span id="tvFaseOuRodada" class="text-[11px] font-bold uppercase tracking-wider text-amber-400 whitespace-nowrap hidden">RODADA 01</span>
+                    </div>
                     <div class="invisible hidden items-center justify-center gap-2">
                         <button onclick="mudarTamanho(-0.05)" title="Diminuir Placar"
                             class="bg-gray-700 hover:bg-red-600 text-white w-6 h-6 rounded font-black text-sm">-</button>
@@ -700,28 +705,27 @@
                     </div>
                     <div id="tvBadgeAoVivo"
                         class="flex items-center justify-end gap-1.5 text-gray-400 font-bold text-[10px] pointer-events-none flex-shrink-0">
-                        <img id="tvLogoComp" src="" class="h-4 w-auto hidden mr-1 object-contain" alt="Campeonato">
                         <span id="tvBolinhaAoVivo" class="w-1.5 h-1.5 bg-gray-500 rounded-full inline-block"></span>
                         <span id="tvTextoBadge" class="uppercase tracking-wider">AGUARDANDO</span>
                     </div>
                 </div>
                 <div id="tvScoreStack" class="grid grid-cols-1 grid-rows-1">
                     <div id="tvMainScoreRow" class="row-start-1 col-start-1 transition-all duration-700">
-                        <div class="flex justify-between items-stretch text-white min-h-[58px] cursor-default pointer-events-none relative">
+                        <div class="flex justify-between items-stretch text-white min-h-[66px] cursor-default pointer-events-none relative">
                             <!-- TIME CASA -->
-                            <div class="flex-1 flex items-center justify-end gap-2.5 px-3.5 py-2 theme-bg relative overflow-hidden">
-                                <span id="tvYellowCardCasa" class="yellow-card absolute top-2 left-2 hidden"></span>
-                                <span id="tvRedCardCasa" class="red-card absolute top-2 left-6 hidden"></span>
+                            <div class="flex-1 flex items-center justify-end gap-3 px-5 py-2 theme-bg relative overflow-hidden">
+                                <span id="tvYellowCardCasa" class="yellow-card absolute top-2.5 left-3.5 hidden"></span>
+                                <span id="tvRedCardCasa" class="red-card absolute top-2.5 left-8 hidden"></span>
                                 <span id="tvNomeCasa"
-                                    class="font-black text-xl uppercase tracking-tight text-right truncate max-w-[125px]">CASA</span>
+                                    class="font-black text-xl xl:text-2xl uppercase tracking-tight text-right truncate max-w-[210px]">CASA</span>
                                 <img id="imgLogoCasa" src=""
                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'"
-                                    referrerpolicy="no-referrer" class="w-9 h-9 object-contain flex-shrink-0">
+                                    referrerpolicy="no-referrer" class="w-11 h-11 object-contain flex-shrink-0">
                             </div>
                             
-                            <!-- CENTRO: PLACAR E TEMPO -->
+                            <!-- CENTRO: PLACAR E TEMPO LADO A LADO -->
                             <div
-                                class="flex flex-col items-center justify-center theme-center-bg px-3.5 py-1.5 min-w-[130px] max-w-[150px] border-x theme-border relative overflow-hidden">
+                                class="flex items-center justify-center theme-center-bg px-4 py-2 min-w-[220px] max-w-[250px] border-x theme-border relative overflow-hidden">
 
                                 <!-- VAR OVERLAY (REVISÃO EM CURSO) -->
                                 <div id="tvVAROverlay"
@@ -738,42 +742,46 @@
                                     <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.05)_1px,transparent_1px)] bg-[size:100%_4px] pointer-events-none"></div>
                                 </div>
 
-                                <div class="flex items-center justify-center w-full gap-2">
+                                <div class="flex items-center justify-center w-full">
                                     <span id="tvPenaltisCasa"
                                         class="hidden text-amber-400 text-sm font-black theme-bg-dark px-1.5 py-0.5 rounded border theme-border mr-1.5">(0)</span>
-                                    <div class="flex items-center justify-center gap-2">
-                                        <span id="tvGolsCasa"
-                                            class="font-black text-2xl md:text-3xl leading-none tabular-nums transition-all duration-300">0</span>
-                                        <span class="font-bold text-xs text-slate-500 uppercase tracking-widest px-0.5">X</span>
-                                        <span id="tvGolsFora"
-                                            class="font-black text-2xl md:text-3xl leading-none tabular-nums transition-all duration-300">0</span>
+                                    
+                                    <span id="tvGolsCasa"
+                                        class="font-black text-3xl md:text-4xl leading-none tabular-nums transition-all duration-300 min-w-[32px] text-center">0</span>
+
+                                    <!-- BLOCO DE CRONÔMETRO CENTRALIZADO -->
+                                    <div class="flex flex-col items-center justify-center mx-3.5 px-3 py-1 rounded bg-black/40 border border-white/10 min-w-[95px]">
+                                        <div class="flex items-center justify-center gap-1.5 leading-none">
+                                            <span id="tvPeriodLabel"
+                                                class="text-[10px] text-amber-400 font-black tracking-wider hidden">1T</span>
+                                            <span id="tvPeriodo"
+                                                class="text-sm font-bold text-white tracking-wider leading-none tabular-nums">00:00</span>
+                                            <span id="tvAcrescimo"
+                                                class="bg-red-500/20 border border-red-500/40 text-red-400 text-[9px] font-black px-1 rounded ml-0.5 hidden">+0</span>
+                                        </div>
+                                        <div id="tvAgregado"
+                                            class="hidden text-[9px] font-bold text-gray-400 tracking-widest mt-1 uppercase">
+                                            AGR. 0 - 0</div>
                                     </div>
+
+                                    <span id="tvGolsFora"
+                                        class="font-black text-3xl md:text-4xl leading-none tabular-nums transition-all duration-300 min-w-[32px] text-center">0</span>
+
                                     <span id="tvPenaltisFora"
                                         class="hidden text-amber-400 text-sm font-black theme-bg-dark px-1.5 py-0.5 rounded border theme-border ml-1.5">(0)</span>
                                 </div>
-                                <div class="mt-1 flex items-center justify-center gap-1.5 bg-black/40 border border-white/10 px-2.5 py-0.5 rounded">
-                                    <span id="tvPeriodLabel"
-                                        class="text-[10px] text-amber-400 font-black tracking-wider hidden">1T</span>
-                                    <span id="tvPeriodo"
-                                        class="text-xs font-bold text-white tracking-wider leading-none tabular-nums">00:00</span>
-                                    <span id="tvAcrescimo"
-                                        class="bg-red-500/20 border border-red-500/40 text-red-400 text-[9px] font-black px-1 rounded ml-0.5 hidden">+0</span>
-                                </div>
-                                <div id="tvAgregado"
-                                    class="hidden text-[9px] font-bold text-gray-400 tracking-widest mt-1 uppercase theme-bg-dark border theme-border px-2 py-0.5 rounded-full">
-                                    AGR. 0 - 0</div>
                             </div>
                             
                             <!-- TIME FORA -->
                             <div
-                                class="flex-1 flex items-center justify-start gap-2.5 px-3.5 py-2 theme-bg relative overflow-hidden">
+                                class="flex-1 flex items-center justify-start gap-3 px-5 py-2 theme-bg relative overflow-hidden">
                                 <img id="imgLogoFora" src=""
                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><circle cx=%2220%22 cy=%2220%22 r=%2218%22 fill=%22%23334155%22/><text x=%2250%25%22 y=%2255%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22 fill=%22%2394a3b8%22 font-size=%2214%22>?</text></svg>'"
-                                    referrerpolicy="no-referrer" class="w-9 h-9 object-contain flex-shrink-0">
+                                    referrerpolicy="no-referrer" class="w-11 h-11 object-contain flex-shrink-0">
                                 <span id="tvNomeFora"
-                                    class="font-black text-xl uppercase tracking-tight text-left truncate max-w-[125px]">FORA</span>
-                                <span id="tvYellowCardFora" class="yellow-card absolute top-2 right-2 hidden"></span>
-                                <span id="tvRedCardFora" class="red-card absolute top-2 right-6 hidden"></span>
+                                    class="font-black text-xl xl:text-2xl uppercase tracking-tight text-left truncate max-w-[210px]">FORA</span>
+                                <span id="tvYellowCardFora" class="yellow-card absolute top-2.5 right-3.5 hidden"></span>
+                                <span id="tvRedCardFora" class="red-card absolute top-2.5 right-8 hidden"></span>
                             </div>
                         </div>
                     </div>

@@ -114,18 +114,16 @@ function traduzirNomeEquipe(nome) {
     return mapa[n] || n;
 }
 
-/** Decide o melhor nome para exibir no placar (Overlay) - Sempre prioriza Sigla (3 letras) */
+/** Decide o melhor nome para exibir no placar (Overlay) - Prioriza nome do clube (ex: PALMEIRAS, GRÊMIO) */
 function getScoreboardName(equipe) {
     if (!equipe) return '?';
     
-    // Prioridade absoluta para a sigla de 3 letras (nameCode) para manter o layout limpo
-    if (equipe.nameCode && equipe.nameCode.length <= 4) {
-        return equipe.nameCode.toUpperCase();
+    // Prioriza o nome real do clube (ex: Grêmio, Palmeiras, Vasco)
+    let nome = equipe.name || equipe.shortName || equipe.nameCode || '?';
+    if (equipe.shortName && equipe.shortName.length > 4 && equipe.name && equipe.name.length > 16) {
+        nome = equipe.shortName;
     }
-    
-    // Fallback para shortName ou nome normal (traduzido se for seleção)
-    const fallbackName = equipe.shortName || equipe.name || '?';
-    return traduzirNomeEquipe(fallbackName).toUpperCase();
+    return traduzirNomeEquipe(nome).toUpperCase();
 }
 
 const H2H_TRANSLATIONS = {

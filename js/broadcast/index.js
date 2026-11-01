@@ -267,30 +267,94 @@ async function atualizarDadosSofaScore() {
             elAgregado.classList.add("hidden");
         }
 
+function formatarContextoPartida(jogo) {
+    if (!jogo) return "";
+    
+    let infoFase = "";
+    let infoPerna = "";
+    
+    // 1. Detecta rodada de pontos corridos (ex: Rodada 34)
+    if (jogo.roundInfo?.round) {
+        return `RODADA ${String(jogo.roundInfo.round).padStart(2, '0')}`;
+    }
+    
+    // 2. Detecta fase de copa / mata-mata (ex: Semifinais, Oitavas, Quartas, Final)
+    if (jogo.roundInfo?.name) {
+        infoFase = (typeof mapTraducoesCampeonato === 'function' ? mapTraducoesCampeonato(jogo.roundInfo.name) : jogo.roundInfo.name).toUpperCase();
+    } else if (jogo.tournament?.stage) {
+        infoFase = (typeof mapTraducoesCampeonato === 'function' ? mapTraducoesCampeonato(jogo.tournament.stage) : jogo.tournament.stage).toUpperCase();
+    }
+    
+    // 3. Detecta perna (Ida / Volta)
+    const desc = (jogo.description || "").toLowerCase();
+    const agrC = jogo.homeScore?.aggregated ?? jogo.homeScore?.aggregate;
+    const hasPreviousLeg = !!(jogo.previousLeg || (agrC !== undefined && agrC !== null));
+    
+    if (desc.includes("ida") || desc.includes("1st leg") || desc.includes("first leg")) {
+        infoPerna = "JOGO DE IDA";
+    } else if (desc.includes("volta") || desc.includes("2nd leg") || desc.includes("second leg") || hasPreviousLeg) {
+        infoPerna = "JOGO DE VOLTA";
+    } else if (jogo.roundInfo?.cupRoundType === 1) {
+        infoPerna = "JOGO DE IDA";
+    } else if (jogo.roundInfo?.cupRoundType === 2) {
+        infoPerna = "JOGO DE VOLTA";
+    }
+    
+    if (infoFase && infoPerna) {
+        return `${infoFase} • ${infoPerna}`;
+    } else if (infoFase) {
+        return infoFase;
+    } else if (infoPerna) {
+        return infoPerna;
+    }
+    
+    return "";
+}
+
         const tidTv = jogo.tournament?.uniqueTournament?.id || jogo.tournament?.id || 0;
         const campeonato = DOM.campeonato || document.getElementById("tvCampeonato");
         if (campeonato) {
             let compName = nomeCampeonatoExibicao(tidTv, jogo.tournament?.name, 'SOFASCORE LIVE').toUpperCase();
-            if (jogo.roundInfo?.round) {
-                compName += ` - RODADA ${String(jogo.roundInfo.round).padStart(2, '0')}`;
-            } else if (jogo.roundInfo?.name) {
-                compName += ` - ${mapTraducoesCampeonato(jogo.roundInfo.name).toUpperCase()}`;
-            }
             campeonato.innerHTML = compName;
+        }
+
+        // Contexto: Rodada ou Fase / Ida e Volta
+        const elFaseOuRodada = document.getElementById("tvFaseOuRodada");
+        const elDivisorContexto = document.getElementById("tvDivisorContexto");
+        const contextoStr = formatarContextoPartida(jogo);
+        if (elFaseOuRodada) {
+            if (contextoStr) {
+                elFaseOuRodada.innerText = contextoStr;
+                elFaseOuRodada.classList.remove("hidden");
+                if (elDivisorContexto) elDivisorContexto.classList.remove("hidden");
+            } else {
+                elFaseOuRodada.classList.add("hidden");
+                if (elDivisorContexto) elDivisorContexto.classList.add("hidden");
+            }
         }
         
         // Logo da Competição
         const elLogoComp = DOM.logoComp || document.getElementById("tvLogoComp");
         if (elLogoComp) {
-            const placarEl = DOM.placarCard || document.getElementById("placarCard");
-            if (placarEl && placarEl.classList.contains('theme-fifa2026')) {
-                elLogoComp.src = "https://digitalhub.fifa.com/transform/157d23bf-7e13-4d7b-949e-5d27d340987e/WC26_Logo?&io=transform:fill,height:210&quality=75";
-                elLogoComp.classList.remove("hidden");
-            } else if (currentTournamentId === 1596 || currentTournamentId === 11620) {
-                elLogoComp.src = sofaImg(`unique-tournament/${currentTournamentId}/image`);
-                elLogoComp.classList.remove("hidden");
+            let logoUrl = jogo.tournament?.logo || "";
+            if (!logoUrl && tidTv) {
+                logoUrl = sofaImg(`unique-tournament/${tidTv}/image`);
+            }
+            const logoContainer = document.getElementById("tvLogoCompContainer");
+            const logoFallback = document.getElementById("tvLogoFallbackIcon");
+            if (logoUrl) {
+                elLogoComp.src = logoUrl;
+                elLogoComp.onload = () => {
+                    if (logoContainer) logoContainer.classList.remove("hidden");
+                    if (logoFallback) logoFallback.classList.add("hidden");
+                };
+                elLogoComp.onerror = () => {
+                    if (logoContainer) logoContainer.classList.add("hidden");
+                    if (logoFallback) logoFallback.classList.remove("hidden");
+                };
             } else {
-                elLogoComp.classList.add("hidden");
+                if (logoContainer) logoContainer.classList.add("hidden");
+                if (logoFallback) logoFallback.classList.remove("hidden");
             }
         }
 
@@ -303,10 +367,13 @@ async function atualizarDadosSofaScore() {
         if (elNomeCasa) elNomeCasa.innerHTML = escapeHTML(nomeCasaFull);
         if (elNomeFora) elNomeFora.innerHTML = escapeHTML(nomeForaFull);
 
-        if (nomeCasaFull.length > 10 && elNomeCasa) elNomeCasa.style.fontSize = "1.2rem";
-        else if (elNomeCasa) elNomeCasa.style.fontSize = "";
-        if (nomeForaFull.length > 10 && elNomeFora) elNomeFora.style.fontSize = "1.2rem";
-        else if (elNomeFora) elNomeFora.style.fontSize = "";
+        if (nomeCasaFull.length > 15 && elNomeCasa) elNomeCasa.style.fontSize = "1.05rem";
+        else if (nomeCasaFull.length > 11 && elNomeCasa) elNomeCasa.style.fontSize = "1.2rem";
+        else if (elNomeCasa) elNomeCasa.style.fontSize = "1.35rem";
+
+        if (nomeForaFull.length > 15 && elNomeFora) elNomeFora.style.fontSize = "1.05rem";
+        else if (nomeForaFull.length > 11 && elNomeFora) elNomeFora.style.fontSize = "1.2rem";
+        else if (elNomeFora) elNomeFora.style.fontSize = "1.35rem";
 
         const imgLogoCasa = DOM.imgLogoCasa || document.getElementById("imgLogoCasa");
         const imgLogoFora = DOM.imgLogoFora || document.getElementById("imgLogoFora");

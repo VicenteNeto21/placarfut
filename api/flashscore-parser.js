@@ -119,15 +119,23 @@ function parseFlashscoreFeed(feedText) {
             const known = FLASHSCORE_KNOWN_LEAGUES[normalizedKey];
 
             const tournamentId = known ? known.id : stringToNumericId(tournamentKey);
-            const tournamentName = known
+            let tournamentName = known
                 ? known.name
                 : (rawName.includes(':') ? rawName.split(':')[1].trim() : rawName);
+
+            let stageFromTour = '';
+            if (tournamentName.includes(' - ')) {
+                const parts = tournamentName.split(' - ');
+                tournamentName = parts[0].trim();
+                stageFromTour = parts.slice(1).join(' - ').trim();
+            }
 
             currentTournament = {
                 id: tournamentId,
                 name: tournamentName,
                 fullName: rawName,
                 country,
+                stage: stageFromTour,
                 logo: logoFile ? `${FLASHSCORE_CDN_IMG}/${logoFile}` : '',
                 uniqueTournament: {
                     id: tournamentId,
@@ -198,7 +206,13 @@ function parseFlashscoreFeed(feedText) {
                 status.description = `${currentMin}'`;
             }
 
-            const roundName = block['ER'] || '';
+            const roundName = block['ER'] || currentTournament.stage || '';
+            let roundNum = undefined;
+            if (roundName) {
+                const matchRound = roundName.match(/(?:rodada|round)\s*(\d+)/i);
+                if (matchRound) roundNum = parseInt(matchRound[1], 10);
+            }
+            const legDesc = block['EM'] || block['WJ'] || block['SI'] || '';
 
             events.push({
                 id: matchId,
@@ -207,6 +221,7 @@ function parseFlashscoreFeed(feedText) {
                 status,
                 statusTime,
                 time: timeInfo,
+                description: legDesc || undefined,
                 tournament: currentTournament,
                 homeTeam: {
                     id: stringToNumericId(homeName),
@@ -234,7 +249,7 @@ function parseFlashscoreFeed(feedText) {
                     period2: block['BD'] ? parseInt(block['BD'], 10) : undefined,
                     penalties: block['AQ'] ? parseInt(block['AQ'], 10) : undefined
                 },
-                roundInfo: roundName ? { name: roundName } : undefined,
+                roundInfo: roundName ? { name: roundName, round: roundNum } : undefined,
                 _source: 'flashscore'
             });
         }
