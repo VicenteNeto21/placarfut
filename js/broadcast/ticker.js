@@ -136,22 +136,18 @@ async function atualizarRodapeSofaScore() {
 
                 tickerHTML += `
                     <div class="ticker-item" data-tournament="${escapeHTML(nomeCompeticaoTicker)}" data-logo="${logoTorneio}">
-                        <span class="ticker-status ${isLive ? 'text-emerald-400 font-black' : 'text-gray-400 font-bold'} mr-2.5 px-2 py-0.5 bg-white/5 rounded text-[11px] tracking-wide">${tempoStr}</span>
-                        <div class="w-5 h-5 rounded-full bg-white/10 p-0.5 inline-flex items-center justify-center mr-1.5 overflow-hidden flex-shrink-0 shadow-sm">
-                            <img src="${logoHome}" onerror="this.style.display='none'" class="w-full h-full object-contain">
-                        </div>
+                        <span class="ticker-status ${isLive ? 'text-emerald-400 font-black' : 'text-gray-400 font-bold'} mr-2 px-2 py-0.5 bg-white/5 rounded text-[11px] tracking-wide">${tempoStr}</span>
+                        <img src="${logoHome}" referrerpolicy="no-referrer" onerror="this.style.display='none'" class="w-5 h-5 mr-1.5 object-contain inline-block flex-shrink-0">
                         <span class="font-bold mr-1 text-white uppercase text-xs sm:text-sm tracking-tight">${homeTeamName}</span>${rcC}
                         ${extraPenC}
-                        <div class="inline-flex items-center gap-1 bg-black/60 border border-white/15 px-2 py-0.5 rounded text-white font-black mx-1.5 tabular-nums text-xs shadow-inner">
+                        <div class="inline-flex items-center gap-1 bg-black/60 border border-white/15 px-2 py-0.5 rounded text-white font-black mx-1.5 tabular-nums text-xs">
                             <span>${currentHome}</span>
                             <span class="text-white/30 text-[10px] font-light">x</span>
                             <span>${currentAway}</span>
                         </div>
                         ${extraPenF}
                         ${rcF}<span class="font-bold ml-1 text-white uppercase text-xs sm:text-sm tracking-tight">${awayTeamName}</span>
-                        <div class="w-5 h-5 rounded-full bg-white/10 p-0.5 inline-flex items-center justify-center ml-1.5 overflow-hidden flex-shrink-0 shadow-sm">
-                            <img src="${logoAway}" onerror="this.style.display='none'" class="w-full h-full object-contain">
-                        </div>
+                        <img src="${logoAway}" referrerpolicy="no-referrer" onerror="this.style.display='none'" class="w-5 h-5 ml-1.5 object-contain inline-block flex-shrink-0">
                         ${extraAgr}
                     </div>
                 `;
@@ -205,40 +201,37 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
 
     textEl.innerHTML = `
         <div class="flex items-center justify-center gap-3 sm:gap-5 w-full h-full text-white">
-            <!-- BADGE PULSANTE DE GOL -->
-            <div class="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 text-white font-[1000] text-xs uppercase tracking-widest px-3 py-1 rounded shadow-[0_0_15px_rgba(16,185,129,0.5)] flex-shrink-0 animate-pulse">
+            <!-- BADGE DE GOL FLAT -->
+            <div class="flex items-center gap-1.5 bg-emerald-600 text-white font-[1000] text-xs uppercase tracking-widest px-3 py-1 rounded flex-shrink-0">
                 <i class="fa-solid fa-futbol text-white"></i>
                 <span>GOL!</span>
             </div>
 
-            <!-- BADGE DA COMPETIÇÃO -->
-            <div class="flex items-center gap-1.5 bg-white/10 border border-white/15 px-3 py-1 rounded text-[11px] font-bold text-white/90 uppercase tracking-wider flex-shrink-0">
+            <!-- BADGE DA COMPETIÇÃO FLAT -->
+            <div class="flex items-center gap-1.5 bg-white/10 border border-white/10 px-2.5 py-0.5 rounded text-[11px] font-bold text-white/90 uppercase tracking-wider flex-shrink-0">
                 <i class="fa-solid fa-trophy text-amber-400 text-[10px]"></i>
                 <span>${escapeHTML(torneioNome)}</span>
             </div>
 
-            <div class="h-5 w-px bg-white/20 hidden sm:block"></div>
+            <div class="h-4 w-px bg-white/15 hidden sm:block"></div>
 
             <!-- DESTAQUE DO TIME QUE MARCOU -->
-            <div class="flex items-center gap-1.5 font-extrabold text-xs sm:text-sm uppercase tracking-wider text-emerald-400 flex-shrink-0">
-                <i class="fa-solid fa-circle-arrow-up text-xs"></i>
+            <div class="flex items-center gap-1.5 font-black text-xs sm:text-sm uppercase tracking-wider text-emerald-400 flex-shrink-0">
                 <span>GOL DO ${escapeHTML(nomeGol)}</span>
             </div>
 
-            <div class="h-5 w-px bg-white/20 hidden sm:block"></div>
+            <div class="h-4 w-px bg-white/15 hidden sm:block"></div>
 
-            <!-- MATCHUP & PLACAR TELEVISIVO -->
-            <div class="flex items-center gap-2.5 flex-shrink-0">
+            <!-- MATCHUP & PLACAR TELEVISIVO FLAT -->
+            <div class="flex items-center gap-3 flex-shrink-0">
                 <!-- TIME CASA -->
                 <div class="flex items-center gap-2">
                     <span class="font-bold text-xs sm:text-sm tracking-tight text-white uppercase">${escapeHTML(nomeCasa)}</span>
-                    <div class="w-6 h-6 rounded-full bg-white/10 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                        <img src="${logoC}" class="w-full h-full object-contain" onerror="this.style.display='none'">
-                    </div>
+                    <img src="${logoC}" referrerpolicy="no-referrer" class="w-6 h-6 object-contain flex-shrink-0" onerror="this.style.display='none'">
                 </div>
 
-                <!-- CÁPSULA DO PLACAR -->
-                <div class="flex items-center gap-1.5 bg-black/60 border border-white/20 px-2.5 py-0.5 rounded font-black text-sm sm:text-base text-white tabular-nums shadow-inner">
+                <!-- CÁPSULA DO PLACAR FLAT -->
+                <div class="flex items-center gap-1.5 bg-black/70 border border-white/15 px-2.5 py-0.5 rounded font-black text-sm sm:text-base text-white tabular-nums">
                     <span class="${isGolCasa ? 'text-emerald-400 font-[1000]' : ''}">${golsC}</span>
                     <span class="text-white/40 text-xs font-normal">x</span>
                     <span class="${isGolFora ? 'text-emerald-400 font-[1000]' : ''}">${golsF}</span>
@@ -246,9 +239,7 @@ function mostrarAlertaGolTicker(timeGolNome, timeCasa, timeFora, golsC, golsF, t
 
                 <!-- TIME FORA -->
                 <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-white/10 p-0.5 flex items-center justify-center overflow-hidden flex-shrink-0 shadow-sm">
-                        <img src="${logoF}" class="w-full h-full object-contain" onerror="this.style.display='none'">
-                    </div>
+                    <img src="${logoF}" referrerpolicy="no-referrer" class="w-6 h-6 object-contain flex-shrink-0" onerror="this.style.display='none'">
                     <span class="font-bold text-xs sm:text-sm tracking-tight text-white uppercase">${escapeHTML(nomeFora)}</span>
                 </div>
             </div>
